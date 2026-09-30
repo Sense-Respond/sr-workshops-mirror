@@ -1,0 +1,111 @@
+<!--
+  Sense & Respond Learning - Public Workshops
+  Paste this whole thing into a Squarespace CODE BLOCK on the /workshops page.
+
+  ONE THING TO EDIT: the FEED url on the next line. Replace YOUR-GITHUB-USERNAME
+  with the account that owns the sr-workshops-mirror repo.
+-->
+
+<div id="srw-root" class="srw">
+  <div class="srw-grid" id="srw-grid">
+    <p class="srw-loading">Loading upcoming workshops&hellip;</p>
+  </div>
+  <p class="srw-foot" id="srw-foot"></p>
+  <noscript>
+    <p class="srw-empty">
+      <a href="https://ti.to/sense-respond-learning/">See all upcoming workshops and book a seat &rarr;</a>
+    </p>
+  </noscript>
+</div>
+
+<style>
+#srw-root{--srw-ink:#101617;--srw-muted:#5a6a6c;--srw-teal:#345C60;--srw-teal-bright:#038A98;
+  --srw-card:#FFFFFF;--srw-line:#e3e6d9;--srw-paper:#F9FAF0;
+  --srw-head:'Oswald',Impact,sans-serif;--srw-body:'Roboto',Helvetica,Arial,sans-serif;
+  font-family:var(--srw-body);color:var(--srw-ink);}
+#srw-root *{box-sizing:border-box;}
+#srw-root .srw-grid{display:grid;gap:22px;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));
+  margin:0;padding:0;list-style:none;}
+#srw-root .srw-card{display:flex;flex-direction:column;background:var(--srw-card);
+  border:1px solid var(--srw-line);border-radius:14px;overflow:hidden;
+  transition:transform .15s ease,box-shadow .15s ease;}
+#srw-root .srw-card:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(16,22,23,.10);}
+#srw-root .srw-banner{display:block;line-height:0;background:var(--srw-paper);}
+#srw-root .srw-banner img{width:100%;height:auto;display:block;}
+#srw-root .srw-body{display:flex;flex-direction:column;gap:10px;padding:20px 20px 22px;flex:1;}
+#srw-root .srw-title{font-family:var(--srw-head);font-weight:400;font-size:1.3rem;line-height:1.22;
+  letter-spacing:-.01em;margin:0;}
+#srw-root .srw-title a{color:var(--srw-ink);text-decoration:none;background-image:none;}
+#srw-root .srw-title a:hover{color:var(--srw-teal-bright);}
+#srw-root .srw-meta{margin:0;font-size:.875rem;color:var(--srw-muted);line-height:1.5;}
+#srw-root .srw-price{margin:0;font-size:.875rem;font-weight:600;color:var(--srw-teal);}
+#srw-root .srw-cta{margin-top:auto;align-self:flex-start;background:var(--srw-teal);color:#fff;
+  text-decoration:none;background-image:none;font-size:.86rem;font-weight:500;padding:9px 22px;
+  border-radius:300px;transition:background .15s ease;}
+#srw-root .srw-cta:hover{background:var(--srw-teal-bright);color:#fff;}
+#srw-root .srw-foot{margin:26px 0 0;font-size:.78rem;color:var(--srw-muted);}
+#srw-root .srw-foot a,#srw-root .srw-empty a{color:var(--srw-teal);}
+#srw-root .srw-loading,#srw-root .srw-empty{grid-column:1/-1;margin:0;padding:28px;
+  border:1px dashed var(--srw-line);border-radius:14px;background:var(--srw-card);color:var(--srw-muted);}
+</style>
+
+<script>
+(function () {
+  var FEED = "https://YOUR-GITHUB-USERNAME.github.io/sr-workshops-mirror/workshops.json";
+  var TITO = "https://ti.to/sense-respond-learning/";
+
+  var grid = document.getElementById("srw-grid");
+  var foot = document.getElementById("srw-foot");
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function fallback(msg) {
+    grid.innerHTML =
+      '<p class="srw-empty">' + msg +
+      ' <a href="' + TITO + '">See all upcoming workshops &rarr;</a></p>';
+    foot.textContent = "";
+  }
+
+  function card(e) {
+    var meta = [e.date_label, e.location || "Live online"].filter(Boolean).join(" · ");
+    return '<article class="srw-card">' +
+      (e.banner
+        ? '<a class="srw-banner" href="' + esc(e.url) + '" tabindex="-1" aria-hidden="true">' +
+          '<img src="' + esc(e.banner) + '" alt="" loading="lazy"></a>'
+        : "") +
+      '<div class="srw-body">' +
+        '<h3 class="srw-title"><a href="' + esc(e.url) + '">' + esc(e.title) + "</a></h3>" +
+        '<p class="srw-meta">' + esc(meta) + "</p>" +
+        (e.price_label ? '<p class="srw-price">From ' + esc(e.price_label) + "</p>" : "") +
+        '<a class="srw-cta" href="' + esc(e.url) + '">Register</a>' +
+      "</div></article>";
+  }
+
+  // Cache-buster changes once a day, matching how often the mirror rebuilds.
+  var day = new Date().toISOString().slice(0, 10);
+
+  fetch(FEED + "?d=" + day, { cache: "no-cache" })
+    .then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    })
+    .then(function (data) {
+      var events = (data && data.events) || [];
+      if (!events.length) {
+        fallback("No public workshops are scheduled right now.");
+        return;
+      }
+      grid.innerHTML = events.map(card).join("");
+      foot.innerHTML =
+        "Workshop list last updated " + esc(data.updated) +
+        '. Tickets are sold and fulfilled through <a href="' + TITO + '">Ti.to</a>.';
+    })
+    .catch(function () {
+      fallback("We couldn't load the workshop list just now.");
+    });
+})();
+</script>
