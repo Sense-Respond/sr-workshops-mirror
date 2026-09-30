@@ -51,13 +51,13 @@ SITE_URL = (os.environ.get("SITE_URL", "").strip()
             or "https://workshops.senseandrespond.co").rstrip("/")
 
 # Bump whenever the rendered output changes, so the no-change guard lets the new design ship.
-TEMPLATE_VERSION = 2
+TEMPLATE_VERSION = 4
 
 TIMELINE_URL = f"https://ti.to/{ACCOUNT}/"
 API_BASE = f"https://api.tito.io/v3/{ACCOUNT}"
 USER_AGENT = "sr-workshops-mirror/1.0 (+https://senseandrespond.co)"
 
-CURRENCY_SYMBOLS = {"USD": "$", "EUR": "€", "GBP": "£", "CAD": "CA$", "AUD": "A$"}
+CURRENCY_SYMBOLS = {"USD": "$", "EUR": "€", "GBP": "£", "CAD": "CA$", "AUD": "A$", "INR": "₹"}
 
 
 # --------------------------------------------------------------------------
@@ -103,6 +103,8 @@ def fetch_from_api():
 
         start = parse_date(a.get("start_date"))
         end = parse_date(a.get("end_date")) or start
+        if start and start <= today:
+            continue  # started or finished: in-progress workshops aren't listed
         if end and end < today:
             continue  # already finished
 
@@ -128,6 +130,7 @@ def fetch_from_api():
             "end_at": a.get("end_at"),
             "timezone": a.get("timezone"),
             "sold_out": sold_out(releases),
+            "region": region_from_description(a.get("description")),
         })
 
     return out
@@ -138,12 +141,16 @@ def is_public_release(r):
     return bool(r) and not (r.get("archived") or r.get("secret") or r.get("not_a_ticket"))
 
 
+def release_sold_out(r):
+    return bool(r.get("sold_out") or r.get("state_name") == "sold_out")
+
+
 def cheapest_price(rel_ids, releases, fallback_currency):
-    """Lowest price across the releases a member of the public could actually buy."""
+    """Lowest price across the releases a member of the public could buy right now."""
     prices = []
     for rid in rel_ids:
         r = releases.get(rid)
-        if not is_public_release(r):
+        if not is_public_release(r) or release_sold_out(r):
             continue
         p = r.get("price")
         if p is None:
@@ -160,7 +167,18 @@ def sold_out(releases):
     public = [r for r in releases if is_public_release(r)]
     if not public:
         return None
-    return all(r.get("sold_out") or r.get("state_name") == "sold_out" for r in public)
+    return all(release_sold_out(r) for r in public)
+
+
+# S&R marks a regional cohort with a globe icon on the first line of the Ti.to description,
+# e.g. '<i class="fa-light fa-globe"></i> Americas & Europe'. Same-title, same-date events
+# for different regions are separate cohorts, not duplicates.
+REGION_RE = re.compile(r'fa-globe[^>]*>(?:\s*</i>)?\s*([^<\r\n]+)')
+
+
+def region_from_description(description):
+    m = REGION_RE.search(description or "") if isinstance(description, str) else None
+    return (clean(m.group(1)).strip(" *_") or None) if m else None
 
 
 def parse_date(value):
@@ -294,6 +312,9 @@ def local_times(e):
     zone = event_zone(e.get("timezone"))
     if zone:
         start, end = start.astimezone(zone), end.astimezone(zone)
+    # Ti.to fills start_at/end_at with midnight when no session time was entered.
+    if (start.hour, start.minute, end.hour, end.minute) == (0, 0, 0, 0):
+        return None, None
     return start, end
 
 
@@ -321,6 +342,31 @@ def format_times(start, end):
     return f"{first}–{clock(end)} {me} {zone_label(start)}"
 
 
+def zone_name(tz):
+    """Readable zone name: 'Central Time, US & Canada', 'Berlin', 'Buenos Aires'."""
+    if "/" in tz:
+        return tz.rsplit("/", 1)[-1].replace("_", " ")
+    return tz.replace(" (", ", ").replace(")", "")
+
+
+def format_zone(e):
+    """'Time zone: CDT (Central Time, US & Canada)' when Ti.to has a zone but no times.
+
+    Skips "UTC": it is Ti.to's default, and on 30 September 2026 every event marked UTC was a
+    regional cohort whose real session times span several zones.
+    """
+    tz = (e.get("timezone") or "").strip()
+    start = parse_date(e.get("start"))
+    if not tz or tz.upper() in ("UTC", "ETC/UTC") or not start:
+        return ""
+    zone = event_zone(tz)
+    if not zone:
+        return f"Time zone: {tz}"
+    abbr = zone_label(dt.datetime(start.year, start.month, start.day, 12, tzinfo=zone))
+    name = zone_name(tz)
+    return f"Time zone: {abbr} ({name})" if name != abbr else f"Time zone: {abbr}"
+
+
 def format_price(amount, currency):
     if amount is None:
         return None
@@ -335,7 +381,7 @@ def dedupe(events):
     seen, kept, dropped = {}, [], []
     for e in events:
         key = (e["title"].lower(), e.get("start"), e.get("end"), e["date_label"],
-               (e.get("location") or "").lower())
+               (e.get("location") or "").lower(), (e.get("region") or "").lower())
         if key in seen:
             dropped.append(e)
         else:
@@ -418,9 +464,11 @@ def card_html(e, anchor):
         '    <div class="ws-band">',
         f'      <p class="ws-when">{date_range_html(e)}</p>',
     ]
-    times = time_range_html(e)
+    times = time_range_html(e) or html.escape(format_zone(e))
     if times:
         bits.append(f'      <p class="ws-time">{times}</p>')
+    if e.get("region"):
+        bits.append(f'      <p class="ws-region">{esc(e["region"])}</p>')
     bits += [
         f'      <p class="ws-where">{esc(place_label(e))}</p>',
         '    </div>',
@@ -567,6 +615,7 @@ def event_schema(e, anchor):
                      else {"@type": "Place", "name": e["location"], "address": e["location"]}),
         "organizer": {"@id": ORGANIZER["@id"]},
         **({"image": [e["banner"]]} if e.get("banner") else {}),
+        **({"description": f'{e["region"]} cohort.'} if e.get("region") else {}),
     }
     offer = {"@type": "Offer", "url": e["url"]}
     if e.get("price_from") is not None:
@@ -659,9 +708,11 @@ def render_llms(events, updated):
         lines.append(f"No public workshops are scheduled right now. See {TIMELINE_URL}")
     for e, a in zip(events, assign_anchors(events)):
         facts = [e.get("date_label") or "Dates to be announced"]
-        times = format_times(*local_times(e))
+        times = format_times(*local_times(e)) or format_zone(e)
         if times:
             facts.append(times)
+        if e.get("region"):
+            facts.append(e["region"])
         facts.append(place_label(e))
         price = format_price(e.get("price_from"), e.get("currency"))
         if e.get("sold_out"):
@@ -703,6 +754,9 @@ def main(argv=None):
         try:
             events, source = fetch_from_api(), "api"
             print(f"Ti.to API: {len(events)} upcoming event(s).")
+            for e in events:
+                if e.get("region"):
+                    print(f"  region: {e['slug']} -> {e['region']}")
         except (OSError, ValueError, KeyError) as exc:
             print(f"ERROR: Ti.to API fetch failed ({exc}). Keeping the existing files.")
             return 1

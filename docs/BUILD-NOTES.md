@@ -26,7 +26,7 @@ This half is tested and correct. Don't rewrite it.
 | `fetch_from_timeline()` | Scrapes the public timeline when no token is set. Correctly excludes past and unscheduled events. **Since late September 2026 the timeline is client-rendered, so this returns nothing.** See `FINDINGS.md` section 5 |
 | `format_range()` | Matches Ti.to's own date phrasing, e.g. "September 17th–October 8th, 2026" (en dash, kept by decision 2026-09-30) |
 | `format_price()`, `ordinal()`, `parse_date()`, `clean()` | Small helpers |
-| `dedupe()` | Collapses events identical on title + start + end + location |
+| `dedupe()` | Collapses events identical on title + start + end + location + **region** (region added 2026-09-30: the "duplicates" were regional cohorts) |
 | The guards in `main()` | Two behaviors worth preserving, described below |
 
 ### Two guards to preserve

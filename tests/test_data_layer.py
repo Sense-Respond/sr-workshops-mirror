@@ -65,6 +65,9 @@ class Prices(unittest.TestCase):
     def test_null(self):
         self.assertIsNone(build.format_price(None, "USD"))
 
+    def test_rupee(self):
+        self.assertEqual(build.format_price(1400, "INR"), "₹1,400")
+
     def test_unknown_currency(self):
         self.assertEqual(build.format_price(500, "CHF"), "500 CHF")
 
@@ -92,16 +95,21 @@ def api_fixture(today):
         event("not-live", live=False),
         event("finished", start_date=iso(today - dt.timedelta(days=5)),
               end_date=iso(today - dt.timedelta(days=1))),
-        event("ends-today", start_date=iso(today - dt.timedelta(days=2)), end_date=iso(today)),
+        event("in-progress", start_date=iso(today - dt.timedelta(days=2)),
+              end_date=iso(today + dt.timedelta(days=2))),
+        event("starts-today", start_date=iso(today), end_date=iso(today + dt.timedelta(days=1))),
+        event("sold-out", description='<i class="fa-light fa-globe"></i> Americas &amp; Europe\n'
+                                      "Course 3 of 6"),
     ]
     releases = {
         "public": [
             {"id": 1, "price": "1200.0", "sold_out": False},
+            {"id": 7, "price": "800.0", "sold_out": True},  # sold out: not the "from" price
             {"id": 2, "price": "100.0", "secret": True},
             {"id": 3, "price": "50.0", "archived": True},
             {"id": 4, "price": "0.0", "not_a_ticket": True},
         ],
-        "ends-today": [
+        "sold-out": [
             {"id": 5, "price": 900, "sold_out": True},
             {"id": 6, "price": 50, "secret": True, "sold_out": False},  # secret: doesn't count
         ],
@@ -134,9 +142,11 @@ class ApiPath(unittest.TestCase):
         calls = []
         with mock.patch.object(build, "get", fake_get(api_fixture(today), calls)):
             events = build.fetch_from_api()
-        self.assertEqual([e["slug"] for e in events], ["public", "ends-today"])
+        # private, test, not-live, finished, in-progress and starts-today are all excluded.
+        self.assertEqual([e["slug"] for e in events], ["public", "sold-out"])
         public = events[0]
-        self.assertEqual(public["price_from"], 1200.0)  # secret, archived, not_a_ticket ignored
+        # secret, archived, not_a_ticket and sold-out releases are ignored for the price.
+        self.assertEqual(public["price_from"], 1200.0)
         self.assertEqual(public["currency"], "USD")
         self.assertEqual(public["url"], "https://ti.to/sense-respond-learning/public")
         self.assertEqual(public["start"], (today + dt.timedelta(days=30)).isoformat())
@@ -144,9 +154,12 @@ class ApiPath(unittest.TestCase):
         self.assertEqual(public["timezone"], "Central Time (US & Canada)")
         self.assertIs(public["sold_out"], False)
         self.assertIs(events[1]["sold_out"], True)
+        self.assertIsNone(events[1]["price_from"])  # every public release is sold out
+        self.assertIsNone(public["region"])
+        self.assertEqual(events[1]["region"], "Americas & Europe")
         # Releases are fetched only for the events that survive the filters.
         self.assertEqual([c[0] for c in calls],
-                         ["events", "public/releases", "ends-today/releases"])
+                         ["events", "public/releases", "sold-out/releases"])
 
     def test_follows_next_page(self):
         today = dt.date.today()
@@ -157,8 +170,20 @@ class ApiPath(unittest.TestCase):
         calls = []
         with mock.patch.object(build, "get", fake_get(responses, calls)):
             events = build.fetch_from_api()
-        self.assertIn("ends-today", [e["slug"] for e in events])
+        self.assertIn("sold-out", [e["slug"] for e in events])
         self.assertEqual(calls[:2], [("events", 1), ("events", 2)])
+
+
+class Regions(unittest.TestCase):
+    def test_extraction(self):
+        r = build.region_from_description
+        self.assertEqual(r('<p><i class="fa-light fa-globe"></i> Americas &amp; Europe\n<br>'),
+                         "Americas & Europe")
+        self.assertEqual(r('<i class="fa-light fa-globe"></i> Asia-Pacific, Middle East &amp; Africa'),
+                         "Asia-Pacific, Middle East & Africa")
+        self.assertEqual(r('<i class="fa-globe"></i>**Americas & Europe**'), "Americas & Europe")
+        for nothing in (None, "", "Just a description.", {"html": "x"}):
+            self.assertIsNone(r(nothing))
 
 
 class SoldOut(unittest.TestCase):
@@ -168,6 +193,26 @@ class SoldOut(unittest.TestCase):
         self.assertTrue(build.sold_out([{"sold_out": True}, {"state_name": "sold_out"}]))
         self.assertFalse(build.sold_out([{"sold_out": True}, {"sold_out": False}]))
         self.assertTrue(build.sold_out([{"sold_out": True}, {"archived": True}]))
+
+
+class Zones(unittest.TestCase):
+    def z(self, tz, start="2026-10-19"):
+        return build.format_zone({"timezone": tz, "start": start})
+
+    def test_zone_without_times(self):
+        self.assertEqual(self.z("Central Time (US & Canada)"), "Time zone: CDT (Central Time, US & Canada)")
+        self.assertEqual(self.z("Central Time (US & Canada)", "2026-12-02"),
+                         "Time zone: CST (Central Time, US & Canada)")
+        self.assertEqual(self.z("Berlin", "2026-12-02"), "Time zone: CET (Berlin)")
+        self.assertEqual(self.z("New Delhi"), "Time zone: IST (New Delhi)")
+        self.assertEqual(self.z("Buenos Aires"), "Time zone: UTC-03:00 (Buenos Aires)")
+        self.assertEqual(self.z("America/Chicago"), "Time zone: CDT (Chicago)")
+        self.assertEqual(self.z("Somewhere Odd"), "Time zone: Somewhere Odd")
+
+    def test_utc_default_and_missing_skipped(self):
+        self.assertEqual(self.z("UTC"), "")
+        self.assertEqual(self.z(None), "")
+        self.assertEqual(self.z("Berlin", None), "")
 
 
 class Times(unittest.TestCase):
@@ -196,6 +241,15 @@ class Times(unittest.TestCase):
     def test_unknown_zone_uses_timestamp_offset(self):
         self.assertEqual(self.label("2026-10-13T09:00:00-05:00", "2026-10-13T11:00:00-05:00",
                                     "Somewhere Odd"), "9:00–11:00 AM UTC-05:00")
+
+    def test_midnight_to_midnight_means_no_time_entered(self):
+        # What the live v3 data returned on 30 September 2026 for every event.
+        self.assertEqual(self.label("2026-10-13T00:00:00.000Z", "2026-10-27T00:00:00.000Z", "UTC"), "")
+        self.assertEqual(self.label("2026-09-17T00:00:00.000-05:00", "2026-10-08T00:00:00.000-05:00",
+                                    "Central Time (US & Canada)"), "")
+        self.assertEqual(build.local_times({"start_at": "2026-10-13T00:00:00Z",
+                                            "end_at": "2026-10-13T00:00:00Z",
+                                            "timezone": "UTC"}), (None, None))
 
     def test_missing_or_naive_gives_nothing(self):
         self.assertEqual(self.label(None, None, "UTC"), "")
@@ -230,6 +284,13 @@ class Dedupe(unittest.TestCase):
         kept, dropped = build.dedupe([self.ev("lps-1"), self.ev("lps-2")])
         self.assertEqual([e["slug"] for e in kept], ["lps-1"])
         self.assertEqual([e["slug"] for e in dropped], ["lps-2"])
+
+    def test_different_regions_kept(self):
+        # The 2027 sequence runs each course twice on the same dates, once per region.
+        kept, dropped = build.dedupe([dict(self.ev("lps-1"), region="Americas & Europe"),
+                                      dict(self.ev("lps-2"), region="Asia-Pacific, Middle East & Africa")])
+        self.assertEqual(len(kept), 2)
+        self.assertEqual(dropped, [])
 
     def test_different_locations_kept(self):
         kept, dropped = build.dedupe([self.ev("a", "Berlin"), self.ev("b", "London")])

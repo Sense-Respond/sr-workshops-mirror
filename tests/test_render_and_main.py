@@ -149,8 +149,22 @@ class TimesAndSoldOut(unittest.TestCase):
         self.assertIn('<p class="ws-time"><time datetime="2026-11-03T09:00-06:00">9:00</time>–'
                       '<time datetime="2026-11-05T11:00-06:00">11:00 AM CST</time></p>', page)
 
-    def test_no_time_line_without_times(self):
+    def test_no_time_line_without_times_or_zone(self):
         self.assertNotIn("ws-time", self.render([ev("a")]))
+        self.assertNotIn("ws-time", self.render([ev("a", timezone="UTC")]))
+
+    def test_zone_line_when_no_times(self):
+        page = self.render([ev("a", timezone="New Delhi", start_at="2026-11-03T00:00:00+05:30",
+                               end_at="2026-11-05T00:00:00+05:30")])
+        self.assertIn('<p class="ws-time">Time zone: IST (New Delhi)</p>', page)
+
+    def test_region_shown_and_in_jsonld(self):
+        e = ev("a", region="Asia-Pacific, Middle East & Africa")
+        page = self.render([e])
+        self.assertIn('<p class="ws-region">Asia-Pacific, Middle East &amp; Africa</p>', page)
+        self.assertEqual(build.event_schema(e, "a")["description"],
+                         "Asia-Pacific, Middle East & Africa cohort.")
+        self.assertIn("Asia-Pacific, Middle East & Africa", build.render_llms([e], "x"))
 
     def test_jsonld_uses_datetimes_when_known(self):
         ld = self.event_ld(ev("a", **self.TIMED))

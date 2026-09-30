@@ -160,6 +160,15 @@ preferred.
 
 ## 6. Duplicate events in Ti.to
 
+**Correction, 2026-09-30. They are not duplicates.** Comparing each `-1`/`-2` pair's public
+Ti.to page: `-1` is the **Americas & Europe** cohort (sessions 11:00 ET / 12:00 BRT /
+17:00 CET) and `-2` is the **Asia-Pacific, Middle East & Africa** cohort (8:30 GST /
+10:00 IST / 14:30 AEST), with different banners. Everything else is identical. The region
+is the first line of the Ti.to description, after a globe icon
+(`<i class="fa-light fa-globe"></i>`). The API gives all twelve the time zone "UTC", which
+looks like Ti.to's default rather than a real setting. `build.py` now reads the region, shows
+it, and includes it in the dedupe key. The section below is kept as a record.
+
 As of 18 September 2026 the timeline lists **21 upcoming events, 6 of which are exact
 duplicates**. Six pairs share a title and dates, with slugs differing only by a trailing
 `-1` and `-2`, all under the `updated-product-training-for-2027` family:
