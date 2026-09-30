@@ -1,0 +1,23 @@
+# Sense & Respond Learning: public workshops
+
+> Upcoming workshops from Sense & Respond Learning: live training in Product Management, Lean UX, Product Discovery, OKRs, Outcomes, and Storytelling. Open to individuals. Tickets are sold through Ti.to.
+
+This list was last updated 30 Sep 2026, 22:33 UTC. The full page is at https://workshops.senseandrespond.co/ and the same data is at https://workshops.senseandrespond.co/workshops.json.
+
+## Upcoming workshops
+
+- [Lean Product Management - Live Online Workshop with Rich Visotcky](https://workshops.senseandrespond.co/#lpm-rich-visotcky-september-october-2026): September 17th–October 8th, 2026. 12:00–12:00 AM CDT. Live online. From $1,295. Register at https://ti.to/sense-respond-learning/lpm-rich-visotcky-september-october-2026
+- [Lean Product Strategy](https://workshops.senseandrespond.co/#updated-product-training-for-2027-lps-1): September 29th–October 1st, 2026. 12:00–12:00 AM UTC. Live online. From $500. Register at https://ti.to/sense-respond-learning/updated-product-training-for-2027-lps-1
+- [Objectives and Key Results](https://workshops.senseandrespond.co/#updated-product-training-for-2027-okrs-1): October 6th–8th, 2026. 12:00–12:00 AM UTC. Live online. From $500. Register at https://ti.to/sense-respond-learning/updated-product-training-for-2027-okrs-1
+- [Objectives & Key Results - Live Online Workshop with Daksh Gupta and Jaya Shrivastava](https://workshops.senseandrespond.co/#okrs-daksh-jaya-october-2026): October 10th–11th, 2026. 12:00–12:00 AM IST. Live online. From 1,400 INR. Register at https://ti.to/sense-respond-learning/okrs-daksh-jaya-october-2026
+- [Lean Product Management](https://workshops.senseandrespond.co/#updated-product-training-for-2027-lpm-1): October 13th–27th, 2026. 12:00–12:00 AM UTC. Live online. From $500. Register at https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpm-1
+- [Objectives & Key Results - Who Does What by How Much? - Live Online Workshop with Rich Visotcky](https://workshops.senseandrespond.co/#okrs-rich-visotcky-october-19-2026): October 19th, 2026. 12:00–12:00 AM CDT. Live online. From $695. Register at https://ti.to/sense-respond-learning/okrs-rich-visotcky-october-19-2026
+- [Lean Product Discovery para Equipos Ágiles - Taller en Línea en Vivo con Federico Zuppa](https://workshops.senseandrespond.co/#lpd-federico-zuppa-octubre-2026): October 28th–November 18th, 2026. 12:00–12:00 AM UTC-03:00. Live online. From $350. Register at https://ti.to/sense-respond-learning/lpd-federico-zuppa-octubre-2026
+- [Lean Product Discovery](https://workshops.senseandrespond.co/#updated-product-training-for-2027-lpd-1): November 3rd–12th, 2026. 12:00–12:00 AM UTC. Live online. From $500. Register at https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpd-1
+- [Storytelling Superpowers for Persuasive Conversations](https://workshops.senseandrespond.co/#updated-product-training-for-2027-sty-1): November 17th–24th, 2026. 12:00–12:00 AM UTC. Live online. From $500. Register at https://ti.to/sense-respond-learning/updated-product-training-for-2027-sty-1
+- [Building AI Products with Lean Product Management](https://workshops.senseandrespond.co/#updated-product-training-for-2027-bai-1): December 1st–3rd, 2026. 12:00–12:00 AM UTC. Live online. From $500. Register at https://ti.to/sense-respond-learning/updated-product-training-for-2027-bai-1
+- [Objectives & Key Results - Who Does What by How Much? - Live Online Workshop mit Simon Flossmann](https://workshops.senseandrespond.co/#okrs-simon-flossmann-december-2026): December 2nd, 2026. 12:00–12:00 AM CET. Live online. From €800. Register at https://ti.to/sense-respond-learning/okrs-simon-flossmann-december-2026
+
+## About
+
+- [Sense & Respond Learning](https://senseandrespond.co): training, workshops and courses for product, design, innovation and Transformation leaders

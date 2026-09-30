@@ -1,0 +1,21 @@
+# Sense & Respond Learning public workshops. Crawlers, including AI crawlers, are welcome.
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: *
+Allow: /
+
+Sitemap: https://workshops.senseandrespond.co/sitemap.xml
