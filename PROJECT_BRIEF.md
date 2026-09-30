@@ -4,58 +4,61 @@
 
 ## Current State
 
-**2026-09-30. Renderer, Action and Netlify config pushed (`040fa3d`). API moved to Ti.to v3,
-not yet run live.**
+**2026-09-30. Pipeline working end to end on Ti.to v3. Netlify and DNS not started.**
+
+The Action builds `public/` from the live API and commits it. Latest build (`81ba016`):
+14 workshops, 0 collapsed, `verify.py` OK. Nothing is public yet.
 
 Done:
-- `build.py` render layer replaced. It writes `index.html`, `workshops.json`, `robots.txt`,
-  `sitemap.xml` and `llms.txt`. Every workshop is in the raw HTML with an `<h2>`, an anchor
-  id from its slug, `<time datetime>` on every date, and one full JSON-LD `Event`. The only
-  `<script>` on the page is the JSON-LD. The Ti.to data layer is byte-for-byte unchanged
-- `main()` guards changed per the 2026-09-30 decisions below. New `--from-json` and `--force`
-- `verify.py` checks what a non-JS crawler sees: titles in the raw HTML against
-  `workshops.json`, JSON-LD Events, `<time>` values, and the sibling files. Takes a
-  directory or the live URL
-- `tests/`: 54 stdlib `unittest` tests. Run with `python3 -m unittest discover tests`
+- `build.py` writes `index.html`, `workshops.json`, `robots.txt`, `sitemap.xml` and
+  `llms.txt`. Every workshop is in the raw HTML with an `<h2>`, an anchor id from its slug,
+  `<time datetime>` on every date, and one full JSON-LD `Event`. The only `<script>` on the
+  page is the JSON-LD
+- Data from the Ti.to Admin API v3 (v2 is retired). The date band shows date, then session
+  times or time zone, then region, then place. Sold-out status and a "from" price that
+  ignores sold-out tickets
+- `main()` guards per the decisions below. `--from-json` and `--force`
+- `verify.py` checks what a non-JS crawler sees. Takes a directory or the live URL
+- `tests/`: 62 stdlib `unittest` tests. Run with `python3 -m unittest discover tests`
 - `.github/workflows/build.yml`: daily at 11:00 UTC, plus a manual run with an optional
-  "force" box. Runs the tests, fails early if `TITO_API_TOKEN` is missing, builds, runs
-  `verify.py`, and commits `public/` only if it changed. The `TITO_API_TOKEN` secret is set
-  on the repo (confirmed 2026-09-30)
-- `netlify.toml`: publishes `public/`, no build command. Skips deploys for pushes that don't
-  touch `public/` or `netlify.toml`. Sets a UTF-8 charset on `llms.txt` and `robots.txt`
+  "force" box. Tests, token check, build, verify, commit `public/` only if it changed
+- `netlify.toml`: publishes `public/`, no build command, skips deploys that don't touch
+  `public/`, UTF-8 charset on `llms.txt` and `robots.txt`
 - Brand PDF kept local and gitignored
 
-First live run, 2026-09-30 (run 36785231040): failed with HTTP 404 because Ti.to has retired
-its v2 API. The guards held: the Action failed and nothing was written. `fetch_from_api()` has
-since been moved to v3 (see Decisions).
+Live runs, 2026-09-30:
+- 36785231040: HTTP 404, Ti.to v2 retired. Guards held, nothing written
+- 36786181400: v3 and the repo token work. Showed midnight as session times, collapsed the
+  regional cohorts as duplicates, and listed in-progress workshops
+- 36787011791: all three fixed. 14 workshops, 10 regional cohorts detected
 
 Open, in order:
-1. Commit and push the v3 change
-2. Run the Action once by hand (Actions tab, "Build workshops page", Run workflow). This is
-   the first v3 call. It creates `public/`, which Netlify needs before its first deploy. A
-  401 here means the repo's `TITO_API_TOKEN` isn't a v3 secret token: generate one at
-  https://id.tito.io and replace the secret
-3. Netlify, in the josh@senseandrespond.co account: install the Netlify GitHub App on the
+1. Netlify, in the josh@senseandrespond.co account: install the Netlify GitHub App on the
    `Sense-Respond` org, scoped to this repo only; create the site from the repo. Leave the
    build command empty; `netlify.toml` sets the publish directory
-4. DNS: add `workshops.senseandrespond.co` in Netlify and create the CNAME wherever the
+2. DNS: add `workshops.senseandrespond.co` in Netlify and create the CNAME wherever the
    senseandrespond.co DNS is managed. Wait for HTTPS
-5. `python3 verify.py https://workshops.senseandrespond.co`. Definition of done item 1
-6. Re-check the duplicate count against the live data (`docs/FINDINGS.md` section 6)
-7. Repoint the "Public Workshops" nav item on Squarespace (Natalia)
+3. `python3 verify.py https://workshops.senseandrespond.co`. Definition of done item 1
+4. Repoint the "Public Workshops" nav item on Squarespace (Natalia)
 
 Also open:
 - Logo is a text placeholder until Natalia supplies the SVG
-- `public/` not generated yet. The sample data is a stale snapshot, so the first real build
-  should come from the API (step 2 above)
+- No session times are entered in Ti.to for any event. When they are, the band shows them
+  (e.g. "9:00–11:00 AM CDT") instead of the time zone
+- The ten regional cohorts carry Ti.to's default time zone, UTC, so they show a region but
+  no time zone. Their real session times (e.g. 11:00 ET / 12:00 BRT / 17:00 CET) are only
+  in the Ti.to description text
+- `docs/TEAM-BRIEF.md` item 2 still calls the regional cohorts duplicates
 - GitHub disables scheduled workflows after 60 days with no repo activity. The Action's own
-  commits count, and the list changes at least as often as a workshop ends, so this should
+  commits count, and the list changes at least as often as a workshop starts, so this should
   not bite. If the Action ever stops running, re-enable it on the Actions tab
 
 Found on 2026-09-30:
 - The ti.to public timeline no longer server-renders its events (`docs/FINDINGS.md`
   section 5). The scrape fallback returns nothing, so without a token a build gets zero
   events
+- Ti.to API v2 is retired (`docs/FINDINGS.md` section 4)
+- The "duplicate" events are regional cohorts (`docs/FINDINGS.md` section 6)
 - The p.21 gradient's middle stop is `#008F23`, not `#00A651` as `BRAND-SPEC.md` said
   (corrected there)
 
@@ -85,6 +88,26 @@ scrapped. See `docs/FINDINGS.md`.
 
 ## Decisions Made
 
+- **2026-09-30. The "duplicates" are regional cohorts; show both.** Each
+  `updated-product-training-for-2027-*-1`/`-2` pair is one course run for Americas & Europe
+  and again for Asia-Pacific, Middle East & Africa, on the same dates (`docs/FINDINGS.md`
+  section 6). The region comes from the globe-icon line in the Ti.to description. It is shown
+  in the date band, JSON-LD and `llms.txt`, and is part of the dedupe key. Narrows the
+  2026-09-18 "collapse duplicate events" decision: only events identical in region too are
+  collapsed.
+- **2026-09-30. Don't list in-progress workshops.** An event is listed only if its start date
+  is after today (UTC, at build time). A workshop starting today is already off the list.
+- **2026-09-30. The "from" price is the cheapest ticket still on sale.** Sold-out releases no
+  longer count, alongside archived, secret and not-a-ticket. If every public release is sold
+  out there is no price and the card says "Sold out".
+- **2026-09-30. Show the time zone even without session times.** E.g. "Time zone: CDT
+  (Central Time, US & Canada)", from Ti.to's `timezone`, abbreviated for the event's own
+  date so daylight saving is right. Zones with no abbreviation show a UTC offset. "UTC" is
+  not shown: it is Ti.to's default, and every event marked UTC today is a regional cohort
+  whose sessions span several zones. The region line covers those.
+- **2026-09-30. Midnight means no time.** Ti.to returns midnight for `start_at`/`end_at`
+  when no session time is entered, so midnight-to-midnight is treated as no time.
+- **2026-09-30. Rupee symbol.** INR prices show as "₹1,400".
 - **2026-09-30. Move `fetch_from_api()` to Ti.to Admin API v3.** v2 is retired (404). Same
   filter and pricing rules as before; only the endpoint, response shape and field names
   changed. Prices come from one releases call per event. Overrides the earlier "keep the data
