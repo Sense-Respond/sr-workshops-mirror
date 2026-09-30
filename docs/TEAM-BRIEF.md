@@ -22,7 +22,7 @@ That rules out the obvious fix. We are on Squarespace 7.1, which has no API for 
 
 ## The solution
 
-Use the GitHub and Netlify setup we already run for webinar.senseandrespond.co.
+Host it on Netlify, where webinar.senseandrespond.co already lives. Same host, different deploy mechanism: the webinar site isn't connected to GitHub, so linking this one to GitHub is a first-time step.
 
 - A script reads our workshops from the ti.to API once a day
 - It writes a complete, plain HTML page, with every workshop in the markup

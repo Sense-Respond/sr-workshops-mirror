@@ -1,25 +1,37 @@
 #!/usr/bin/env python3
 """
-Build a static mirror of the Sense & Respond Learning public workshops page.
+Build the Sense & Respond Learning public workshops page.
 
-Reads upcoming events from Ti.to and writes two files into ./public:
+Reads upcoming events from Ti.to and writes a static, server-rendered site into ./public:
 
-    public/workshops.json   - structured data feed
-    public/index.html      - a standalone, styled, crawlable page
+    public/index.html      - the page. Every workshop is in the HTML; no JavaScript
+    public/workshops.json  - the same data as JSON, and the "last good build" record
+    public/robots.txt      - welcomes search and AI crawlers
+    public/sitemap.xml
+    public/llms.txt        - plain-text summary for LLMs
 
-Data sources, in order of preference:
-    1. Ti.to Admin API   (set TITO_API_TOKEN) - structured dates, locations, prices
-    2. Public timeline   (no token needed)    - scraped from ti.to/<account>
+Data sources:
+    1. Ti.to Admin API   (set TITO_API_TOKEN) - structured dates, locations, prices.
+                         If the token is set and the API fails, the build exits 1 and
+                         writes nothing.
+    2. Public timeline   (no token)           - scraped from ti.to/<account>. For local
+                         runs only. Since late September 2026 the timeline renders its
+                         events client-side, so this returns nothing.
+
+Options:
+    --from-json PATH  Build from a saved workshops.json, e.g. docs/sample-workshops.json
+    --force           Write even when the data and template are unchanged
 
 Environment variables:
-    TITO_API_TOKEN   Ti.to API token. Optional; falls back to scraping.
+    TITO_API_TOKEN   Ti.to API token.
     TITO_ACCOUNT     Account slug. Default: sense-respond-learning
     OUT_DIR          Output directory. Default: ./public
     DEDUPE           "true" (default) collapses events with an identical
                      title + start + end + location into one card.
-    SITE_URL         Canonical URL of the published mirror, for <link rel=canonical>.
+    SITE_URL         Canonical URL. Default: https://workshops.senseandrespond.co
 """
 
+import argparse
 import datetime as dt
 import html
 import json
@@ -33,7 +45,11 @@ ACCOUNT = os.environ.get("TITO_ACCOUNT", "sense-respond-learning")
 TOKEN = os.environ.get("TITO_API_TOKEN", "").strip()
 OUT_DIR = os.environ.get("OUT_DIR", "public")
 DEDUPE = os.environ.get("DEDUPE", "true").lower() not in ("false", "0", "no")
-SITE_URL = os.environ.get("SITE_URL", "").strip()
+SITE_URL = (os.environ.get("SITE_URL", "").strip()
+            or "https://workshops.senseandrespond.co").rstrip("/")
+
+# Bump whenever the rendered output changes, so the no-change guard lets the new design ship.
+TEMPLATE_VERSION = 1
 
 TIMELINE_URL = f"https://ti.to/{ACCOUNT}/"
 API_BASE = f"https://api.tito.io/v2/{ACCOUNT}"
@@ -238,68 +254,137 @@ def dedupe(events):
     return kept, dropped
 
 
+
 # --------------------------------------------------------------------------
 # Rendering
 # --------------------------------------------------------------------------
 
-def card_html(e):
-    esc = html.escape
-    price = format_price(e.get("price_from"), e.get("currency"))
-    meta = [m for m in (e.get("date_label"), e.get("location") or "Live online") if m]
+ORGANIZER = {"@type": "Organization", "@id": "https://senseandrespond.co/#org",
+             "name": "Sense & Respond Learning", "url": "https://senseandrespond.co"}
 
-    bits = [f'  <article class="srw-card">']
+# Treated as online: no location at all, or one that says "online" or "zoom" in any case.
+ONLINE_RE = re.compile(r"\b(online|zoom)\b", re.I)
+
+# Crawlers robots.txt names explicitly. Goal 2 of the brief.
+AI_CRAWLERS = ("GPTBot", "ClaudeBot", "PerplexityBot", "Google-Extended", "CCBot")
+
+
+def is_online(location):
+    return not location or bool(ONLINE_RE.search(location))
+
+
+def anchor_id(slug):
+    return re.sub(r"[^a-z0-9-]+", "-", (slug or "").lower()).strip("-") or "workshop"
+
+
+def date_range_html(e):
+    """format_range() with each date wrapped in <time datetime>. Same visible text."""
+    start, end = parse_date(e.get("start")), parse_date(e.get("end"))
+    if not start:
+        return html.escape(e.get("date_label") or "")
+
+    def t(d, text):
+        return f'<time datetime="{d.isoformat()}">{text}</time>'
+
+    if not end or end == start:
+        return t(start, f"{start:%B} {ordinal(start.day)}, {start.year}")
+    if (start.year, start.month) == (end.year, end.month):
+        return (t(start, f"{start:%B} {ordinal(start.day)}") + "–"
+                + t(end, f"{ordinal(end.day)}, {end.year}"))
+    if start.year == end.year:
+        return (t(start, f"{start:%B} {ordinal(start.day)}") + "–"
+                + t(end, f"{end:%B} {ordinal(end.day)}, {end.year}"))
+    return (t(start, f"{start:%B} {ordinal(start.day)}, {start.year}") + "–"
+            + t(end, f"{end:%B} {ordinal(end.day)}, {end.year}"))
+
+
+def place_label(e):
+    return "Live online" if is_online(e.get("location")) else e["location"]
+
+
+def card_html(e, anchor):
+    esc = html.escape
+    url = esc(e["url"])
+    price = format_price(e.get("price_from"), e.get("currency"))
+
+    bits = [f'<article class="ws{"" if e.get("banner") else " ws--plain"}" id="{esc(anchor)}">']
     if e.get("banner"):
-        bits.append(
-            f'    <a class="srw-banner" href="{esc(e["url"])}" tabindex="-1" aria-hidden="true">'
-            f'<img src="{esc(e["banner"])}" alt="" loading="lazy"></a>'
-        )
-    bits.append('    <div class="srw-body">')
-    bits.append(f'      <h3 class="srw-title"><a href="{esc(e["url"])}">{esc(e["title"])}</a></h3>')
-    bits.append(f'      <p class="srw-meta">{esc(" · ".join(meta))}</p>')
+        bits.append(f'  <a class="ws-banner" href="{url}" tabindex="-1" aria-hidden="true">'
+                    f'<img src="{esc(e["banner"])}" alt="" loading="lazy" decoding="async"></a>')
+    bits += [
+        '  <div class="ws-body">',
+        f'    <h2 class="ws-title"><a href="{url}">{esc(e["title"])}</a></h2>',
+        '    <div class="ws-band">',
+        f'      <p class="ws-when">{date_range_html(e)}</p>',
+        f'      <p class="ws-where">{esc(place_label(e))}</p>',
+        '    </div>',
+    ]
     if price:
-        bits.append(f'      <p class="srw-price">From {esc(price)}</p>')
-    bits.append(
-        f'      <a class="srw-cta" href="{esc(e["url"])}">Register'
-        f'<span class="srw-sr">: {esc(e["title"])}</span></a>'
-    )
-    bits.append('    </div>')
-    bits.append('  </article>')
+        bits.append(f'    <p class="ws-price">From {esc(price)}</p>')
+    bits += [
+        f'    <a class="ws-cta" href="{url}">Register<span class="sr">: {esc(e["title"])}</span></a>',
+        '  </div>',
+        '</article>',
+    ]
     return "\n".join(bits)
+
 
 
 STYLES = """
 :root{
-  --srw-ink:#101617; --srw-muted:#5a6a6c; --srw-teal:#345C60; --srw-teal-bright:#038A98;
-  --srw-lime:#E2F46F; --srw-paper:#F9FAF0; --srw-card:#FFFFFF; --srw-line:#e3e6d9;
-  --srw-head:'Oswald',Impact,sans-serif; --srw-body:'Roboto',Helvetica,Arial,sans-serif;
+  --chalk:#F9FAF0; --white:#FFFFFF; --iron:#39393D; --slate:#58585A; --teal:#345C60;
+  --line:#E3E6D6;
+  --head:'Oswald','Arial Narrow',Impact,sans-serif;
+  --body:'Roboto',Helvetica,Arial,sans-serif;
 }
-.srw{font-family:var(--srw-body);color:var(--srw-ink);}
-.srw *{box-sizing:border-box;}
-.srw-grid{display:grid;gap:22px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
-  list-style:none;margin:0;padding:0;}
-.srw-card{display:flex;flex-direction:column;background:var(--srw-card);
-  border:1px solid var(--srw-line);border-radius:14px;overflow:hidden;
-  transition:transform .15s ease,box-shadow .15s ease;}
-.srw-card:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(16,22,23,.10);}
-.srw-banner{display:block;line-height:0;background:var(--srw-paper);}
-.srw-banner img{width:100%;height:auto;display:block;}
-.srw-body{display:flex;flex-direction:column;gap:10px;padding:20px 20px 22px;flex:1;}
-.srw-title{font-family:var(--srw-head);font-weight:400;font-size:1.32rem;line-height:1.22;
-  letter-spacing:-.01em;margin:0;}
-.srw-title a{color:var(--srw-ink);text-decoration:none;}
-.srw-title a:hover{color:var(--srw-teal-bright);}
-.srw-meta{margin:0;font-size:.875rem;color:var(--srw-muted);line-height:1.5;}
-.srw-price{margin:0;font-size:.875rem;font-weight:600;color:var(--srw-teal);}
-.srw-cta{margin-top:auto;align-self:flex-start;background:var(--srw-teal);color:#fff;
-  text-decoration:none;font-size:.86rem;font-weight:500;padding:9px 22px;border-radius:300px;
-  transition:background .15s ease;}
-.srw-cta:hover{background:var(--srw-teal-bright);color:#fff;}
-.srw-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{margin:0;background:var(--chalk);color:var(--iron);font:400 18px/1.6 var(--body);}
+a{color:var(--teal);}
+a:focus-visible{outline:3px solid var(--iron);outline-offset:3px;}
+.wrap{max-width:1100px;margin:0 auto;padding:0 20px;}
+
+.site-head .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
+  gap:8px 24px;padding-top:24px;padding-bottom:24px;}
+/* LOGO PLACEHOLDER. Replace with the SVG from Natalia. Guide p.8: clear space of 50% of the
+   logo's height on every side, which the padding here reserves. */
+.logo{display:inline-block;padding:11px 0;font:700 22px/1 var(--head);text-transform:uppercase;
+  letter-spacing:.02em;color:var(--iron);text-decoration:none;}
+
+h1{font:700 clamp(44px,10vw,72px)/1.05 var(--head);text-transform:uppercase;margin:24px 0 16px;}
+.lede-head{font:400 clamp(26px,4.5vw,36px)/1.2 var(--head);margin:0 0 12px;}
+.lede{max-width:40em;margin:0 0 40px;}
+
+.ws-list{display:grid;gap:28px;}
+.ws{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);background:var(--white);
+  border:1px solid var(--line);}
+.ws--plain{grid-template-columns:minmax(0,1fr);}
+.ws-banner{display:block;line-height:0;}
+.ws-banner img{display:block;width:100%;height:auto;}
+.ws-body{display:flex;flex-direction:column;align-items:flex-start;gap:18px;padding:28px 32px 32px;}
+.ws-title{font:400 clamp(26px,4.5vw,36px)/1.2 var(--head);margin:0;}
+.ws-title a{color:var(--iron);text-decoration:none;}
+.ws-title a:hover{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px;}
+/* Guide p.21 date gradient, trimmed to the 8%-68% span where white text clears 3:1, with
+   large bold text (22px bold is WCAG "large"). Option c-alt, chosen 2026-09-30. */
+.ws-band{align-self:stretch;color:#FFFFFF;padding:14px 20px;
+  background:linear-gradient(90deg,#04A6A4 0%,#008F23 70%,#45A928 100%);}
+.ws-band p{margin:0;font-weight:700;font-size:22px;}
+.ws-price{margin:0;font-weight:700;}
+.ws-cta{display:inline-block;background:var(--iron);color:#FFFFFF;font:700 24px/1.2 var(--body);
+  text-decoration:none;padding:14px 40px;}
+.ws-cta:hover{background:var(--teal);}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);
   clip-path:inset(50%);white-space:nowrap;}
-.srw-foot{margin:26px 0 0;font-size:.78rem;color:var(--srw-muted);}
-.srw-foot a{color:var(--srw-teal);}
-.srw-empty{margin:0;padding:28px;border:1px dashed var(--srw-line);border-radius:14px;
-  background:var(--srw-card);color:var(--srw-muted);}
+.empty{background:var(--white);border:1px solid var(--line);padding:28px 32px;margin:0;}
+
+.site-foot{color:var(--slate);padding:48px 0 64px;}
+.site-foot p{margin:0 0 8px;}
+
+@media (max-width:760px){
+  .ws{grid-template-columns:minmax(0,1fr);}
+  .ws-body{padding:20px 20px 24px;}
+}
 """
 
 PAGE = """<!doctype html>
@@ -308,96 +393,206 @@ PAGE = """<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Public Workshops | Sense &amp; Respond Learning</title>
-<meta name="description" content="Upcoming public workshops from Sense &amp; Respond Learning: product management, discovery, OKRs and storytelling training.">
-{canonical}
+<meta name="description" content="{description}">
+<link rel="canonical" href="{site}/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Public Workshops | Sense &amp; Respond Learning">
+<meta property="og:description" content="{description}">
+<meta property="og:url" content="{site}/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-<style>
-body{{margin:0;background:var(--srw-paper);padding:48px 20px 64px;}}
-.srw-wrap{{max-width:1120px;margin:0 auto;}}
-.srw-h1{{font-family:var(--srw-head);font-weight:400;font-size:clamp(2rem,5vw,3.1rem);
-  letter-spacing:-.02em;margin:0 0 10px;}}
-.srw-lede{{margin:0 0 36px;max-width:60ch;color:var(--srw-muted);font-size:1.02rem;line-height:1.6;}}
-{styles}
-</style>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<style>{styles}</style>
+<script type="application/ld+json">{schema}</script>
 </head>
 <body>
-<div class="srw srw-wrap">
-  <h1 class="srw-h1">Public Workshops</h1>
-  <p class="srw-lede">Product management, discovery, OKRs and storytelling training and workshops.
-     Open to individuals &mdash; book a seat below.</p>
-  <div class="srw-grid">
+<header class="site-head">
+  <div class="wrap">
+    <a class="logo" href="https://senseandrespond.co">Sense &amp; Respond Learning</a>
+    <a href="https://senseandrespond.co">Back to senseandrespond.co</a>
+  </div>
+</header>
+<main class="wrap">
+  <h1>Public Workshops</h1>
+  <h2 class="lede-head">{lede_head}</h2>
+  <p class="lede">{lede}</p>
+  <div class="ws-list">
 {cards}
   </div>
-  <p class="srw-foot">Workshop list last updated {updated}. Tickets are sold and fulfilled through
-     <a href="{timeline}">Ti.to</a>.</p>
-</div>
-<script type="application/ld+json">{schema}</script>
+</main>
+<footer class="site-foot">
+  <div class="wrap">
+    <p>List updated <time datetime="{updated_iso}">{updated}</time>.
+       Tickets are sold through <a href="{timeline}">Ti.to</a>.</p>
+    <p><a href="https://senseandrespond.co">Sense &amp; Respond Learning</a></p>
+  </div>
+</footer>
 </body>
 </html>
 """
 
+DESCRIPTION = ("Upcoming workshops from Sense & Respond Learning: live training in Product "
+               "Management, Lean UX, Product Discovery, OKRs, Outcomes, and Storytelling.")
+LEDE_HEAD = "Build these skills, your way"
+LEDE = ("Our training is available in person or online, live and interactive, delivered "
+        "on-site or remotely, wherever you’re located. Created by Jeff Gothelf and Josh Seiden, "
+        "and led by our Certified Training Partners worldwide, you get the same training, in "
+        "the format that fits.")
 
-def render_page(events, updated):
-    if events:
-        cards = "\n".join(card_html(e) for e in events)
-    else:
-        cards = ('  <p class="srw-empty">No public workshops are scheduled right now. '
-                 f'Check <a href="{TIMELINE_URL}">our ticketing page</a> for the latest.</p>')
 
-    schema = {
-        "@context": "https://schema.org",
-        "@type": "ItemList",
-        "itemListElement": [
-            {
-                "@type": "ListItem",
-                "position": i + 1,
-                "item": {
-                    "@type": "Event",
-                    "name": e["title"],
-                    "url": e["url"],
-                    **({"startDate": e["start"]} if e.get("start") else {}),
-                    **({"endDate": e["end"]} if e.get("end") else {}),
-                    "eventAttendanceMode": "https://schema.org/OnlineEventAttendanceMode",
-                    "organizer": {"@type": "Organization",
-                                  "name": "Sense & Respond Learning",
-                                  "url": "https://senseandrespond.co"},
-                },
-            }
-            for i, e in enumerate(events)
-        ],
+def event_schema(e, anchor):
+    online = is_online(e.get("location"))
+    ev = {
+        "@type": "Event",
+        "@id": f"{SITE_URL}/#{anchor}",
+        "name": e["title"],
+        "url": e["url"],
+        **({"startDate": e["start"]} if e.get("start") else {}),
+        **({"endDate": e["end"]} if e.get("end") else {}),
+        "eventStatus": "https://schema.org/EventScheduled",
+        "eventAttendanceMode": "https://schema.org/"
+                               + ("OnlineEventAttendanceMode" if online
+                                  else "OfflineEventAttendanceMode"),
+        "location": ({"@type": "VirtualLocation", "url": e["url"]} if online
+                     else {"@type": "Place", "name": e["location"], "address": e["location"]}),
+        "organizer": {"@id": ORGANIZER["@id"]},
+        **({"image": [e["banner"]]} if e.get("banner") else {}),
     }
+    offer = {"@type": "Offer", "url": e["url"]}
+    if e.get("price_from") is not None:
+        offer["price"] = f'{e["price_from"]:.2f}'
+        offer["priceCurrency"] = (e.get("currency") or "USD").upper()
+    ev["offers"] = offer
+    return ev
 
-    canonical = f'<link rel="canonical" href="{html.escape(SITE_URL)}">' if SITE_URL else ""
+
+def json_for_script(obj):
+    """JSON safe to embed in <script>: a title containing </script> can't close the tag."""
+    return (json.dumps(obj, ensure_ascii=False, indent=1)
+            .replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026"))
+
+
+def assign_anchors(events):
+    """One unique anchor id per event, from its slug."""
+    seen, out = set(), []
+    for e in events:
+        base = anchor_id(e.get("slug"))
+        a, n = base, 2
+        while a in seen:
+            a, n = f"{base}-{n}", n + 1
+        seen.add(a)
+        out.append(a)
+    return out
+
+
+def render_page(events, updated, updated_iso):
+    anchors = assign_anchors(events)
+    if events:
+        cards = "\n".join(card_html(e, a) for e, a in zip(events, anchors))
+    else:
+        cards = ('<p class="empty">No public workshops are scheduled right now. '
+                 f'See <a href="{TIMELINE_URL}">our ticketing page</a> for the latest.</p>')
+
+    schema = {"@context": "https://schema.org",
+              "@graph": [ORGANIZER] + [event_schema(e, a) for e, a in zip(events, anchors)]}
+
     return PAGE.format(
-        canonical=canonical,
+        description=html.escape(DESCRIPTION),
+        lede_head=html.escape(LEDE_HEAD),
+        lede=html.escape(LEDE),
+        site=html.escape(SITE_URL),
         styles=STYLES,
+        schema=json_for_script(schema),
         cards=cards,
-        updated=updated,
+        updated=html.escape(updated),
+        updated_iso=html.escape(updated_iso),
         timeline=TIMELINE_URL,
-        schema=json.dumps(schema, ensure_ascii=False),
     )
+
+
+def render_robots():
+    lines = ["# Sense & Respond Learning public workshops. Crawlers, including AI crawlers, "
+             "are welcome.", ""]
+    for bot in AI_CRAWLERS + ("*",):
+        lines += [f"User-agent: {bot}", "Allow: /", ""]
+    lines.append(f"Sitemap: {SITE_URL}/sitemap.xml")
+    return "\n".join(lines) + "\n"
+
+
+def render_sitemap(updated_iso):
+    return ('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+            f'  <url>\n    <loc>{html.escape(SITE_URL)}/</loc>\n'
+            f'    <lastmod>{updated_iso[:10]}</lastmod>\n  </url>\n'
+            '</urlset>\n')
+
+
+def render_llms(events, updated):
+    def md(text):
+        return re.sub(r"([\[\]])", r"\\\1", text)
+
+    lines = [
+        "# Sense & Respond Learning: public workshops",
+        "",
+        f"> {DESCRIPTION} Open to individuals. Tickets are sold through Ti.to.",
+        "",
+        f"This list was last updated {updated}. The full page is at {SITE_URL}/ and the same "
+        f"data is at {SITE_URL}/workshops.json.",
+        "",
+        "## Upcoming workshops",
+        "",
+    ]
+    if not events:
+        lines.append(f"No public workshops are scheduled right now. See {TIMELINE_URL}")
+    for e, a in zip(events, assign_anchors(events)):
+        facts = [e.get("date_label") or "Dates to be announced", place_label(e)]
+        price = format_price(e.get("price_from"), e.get("currency"))
+        if price:
+            facts.append(f"From {price}")
+        lines.append(f"- [{md(e['title'])}]({SITE_URL}/#{a}): {'. '.join(facts)}. "
+                     f"Register at {e['url']}")
+    lines += ["", "## About", "",
+              "- [Sense & Respond Learning](https://senseandrespond.co): training, workshops "
+              "and courses for product, design, innovation and Transformation leaders"]
+    return "\n".join(lines) + "\n"
 
 
 # --------------------------------------------------------------------------
 # Main
 # --------------------------------------------------------------------------
 
-def main():
-    source = "api"
-    if TOKEN:
+def parse_args(argv):
+    p = argparse.ArgumentParser(description="Build the public workshops page from Ti.to.")
+    p.add_argument("--from-json", metavar="PATH",
+                   help="read events from a saved workshops.json instead of Ti.to (development)")
+    p.add_argument("--force", action="store_true",
+                   help="write the files even if the data and template are unchanged")
+    return p.parse_args(argv)
+
+
+def main(argv=None):
+    args = parse_args(argv)
+
+    if args.from_json:
+        with open(args.from_json, encoding="utf-8") as fh:
+            events = json.load(fh)["events"]
+        source = f"file:{os.path.basename(args.from_json)}"
+        print(f"Read {len(events)} event(s) from {args.from_json}.")
+    elif TOKEN:
+        # With a token, the API is the only source. The timeline scrape has no dates or
+        # prices, so falling back to it would publish a worse page and hide the failure.
         try:
-            events = fetch_from_api()
+            events, source = fetch_from_api(), "api"
             print(f"Ti.to API: {len(events)} upcoming event(s).")
-        except (urllib.error.URLError, urllib.error.HTTPError, ValueError, KeyError) as exc:
-            print(f"WARNING: API fetch failed ({exc}); falling back to the public timeline.")
-            events, source = fetch_from_timeline(), "timeline-fallback"
+        except (OSError, ValueError, KeyError) as exc:
+            print(f"ERROR: Ti.to API fetch failed ({exc}). Keeping the existing files.")
+            return 1
     else:
         print("No TITO_API_TOKEN set; reading the public timeline.")
         events, source = fetch_from_timeline(), "timeline"
 
-    events.sort(key=lambda e: (e.get("start") or "9999", e["title"].lower()))
+    # Slug breaks ties, so the same duplicate survives dedupe on every run.
+    events.sort(key=lambda e: (e.get("start") or "9999", e["title"].lower(), e.get("slug") or ""))
 
     dropped = []
     if DEDUPE:
@@ -409,12 +604,13 @@ def main():
         e["price_label"] = format_price(e.get("price_from"), e.get("currency"))
 
     previous = os.path.join(OUT_DIR, "workshops.json")
-    prior_events, prior_updated = None, None
+    prior_events, prior_updated, prior_template = None, None, None
     if os.path.exists(previous):
         try:
             with open(previous, encoding="utf-8") as fh:
                 prior = json.load(fh)
             prior_events, prior_updated = prior.get("events"), prior.get("updated")
+            prior_template = prior.get("template_version")
         except (ValueError, OSError):
             pass
 
@@ -427,29 +623,41 @@ def main():
 
     # Nothing changed upstream, so don't touch the files. This keeps the
     # timestamp on the page honest (it means "the list changed then", not
-    # "a job ran then") and keeps the repo free of no-op commits.
-    if events == prior_events:
+    # "a job ran then") and keeps the repo free of no-op commits. A new
+    # TEMPLATE_VERSION counts as a change, so design changes still ship.
+    if not args.force and events == prior_events and prior_template == TEMPLATE_VERSION:
         print(f"No change: {len(events)} event(s), same as the last build "
               f"({prior_updated}). Nothing written.")
         return 0
 
-    updated = dt.datetime.now(dt.timezone.utc).strftime("%d %b %Y, %H:%M UTC")
+    now = dt.datetime.now(dt.timezone.utc)
+    updated = now.strftime("%d %b %Y, %H:%M UTC")
+    updated_iso = now.isoformat(timespec="seconds")
+
+    feed = json.dumps({
+        "account": ACCOUNT,
+        "source": source,
+        "updated": updated,
+        "updated_iso": updated_iso,
+        "template_version": TEMPLATE_VERSION,
+        "ticketing_url": TIMELINE_URL,
+        "count": len(events),
+        "deduped": len(dropped),
+        "events": events,
+    }, ensure_ascii=False, indent=2)
+
+    # Render everything before writing anything, so a render error can't leave a mix.
+    outputs = {
+        "index.html": render_page(events, updated, updated_iso),
+        "robots.txt": render_robots(),
+        "sitemap.xml": render_sitemap(updated_iso),
+        "llms.txt": render_llms(events, updated),
+        "workshops.json": feed,
+    }
     os.makedirs(OUT_DIR, exist_ok=True)
-
-    with open(os.path.join(OUT_DIR, "workshops.json"), "w", encoding="utf-8") as fh:
-        json.dump({
-            "account": ACCOUNT,
-            "source": source,
-            "updated": updated,
-            "updated_iso": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
-            "ticketing_url": TIMELINE_URL,
-            "count": len(events),
-            "deduped": len(dropped),
-            "events": events,
-        }, fh, ensure_ascii=False, indent=2)
-
-    with open(os.path.join(OUT_DIR, "index.html"), "w", encoding="utf-8") as fh:
-        fh.write(render_page(events, updated))
+    for name, body in outputs.items():
+        with open(os.path.join(OUT_DIR, name), "w", encoding="utf-8") as fh:
+            fh.write(body)
 
     print(f"Wrote {len(events)} event(s) to {OUT_DIR}/ (source: {source}).")
     return 0

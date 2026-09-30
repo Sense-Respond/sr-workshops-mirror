@@ -1,3 +1,6 @@
 .DS_Store
 __pycache__/
 .env
+
+# Brand guide PDF: local reference only (20MB, client document). See docs/BRAND-SPEC.md
+docs/S&R Brand Guidelines*.pdf

@@ -4,7 +4,11 @@
 
 | File | Status |
 |---|---|
-| `build.py` | Partly reusable. Data layer is built and tested. Render layer targets the abandoned approach and needs rewriting |
+| `build.py` | Data layer kept as-is. Render layer and `main()` rewritten 2026-09-30 |
+| `verify.py` | Checks the raw HTML the way a non-JS crawler sees it. `python3 verify.py [dir or URL]` |
+| `tests/` | stdlib `unittest`. `python3 -m unittest discover tests` |
+| `.github/workflows/build.yml` | Daily build at 11:00 UTC: test, build, verify, commit `public/` if changed |
+| `netlify.toml` | Publish `public/`, no build command, skip deploys that don't touch `public/` |
 | `docs/sample-workshops.json` | Real snapshot of 15 workshops, 18 September 2026. Use it to develop and test the renderer without hitting the API |
 | `docs/DEPRECATED-squarespace-code-block.html` | Do not ship. Kept as a record of the wrong approach. See `docs/FINDINGS.md`, dead end 1 |
 
@@ -19,8 +23,8 @@ This half is tested and correct. Don't rewrite it.
 |---|---|
 | `fetch_from_api()` | Reads the Ti.to API, filters out private, test-mode, not-live and finished events |
 | `cheapest_price()` | Lowest price across releases a member of the public can actually buy. Ignores archived, secret and not-a-ticket releases |
-| `fetch_from_timeline()` | Scrapes the public timeline as a fallback when there's no token or the API errors. Correctly excludes past and unscheduled events |
-| `format_range()` | Matches Ti.to's own date phrasing, e.g. "September 17th to October 8th, 2026" |
+| `fetch_from_timeline()` | Scrapes the public timeline when no token is set. Correctly excludes past and unscheduled events. **Since late September 2026 the timeline is client-rendered, so this returns nothing.** See `FINDINGS.md` section 5 |
+| `format_range()` | Matches Ti.to's own date phrasing, e.g. "September 17th–October 8th, 2026" (en dash, kept by decision 2026-09-30) |
 | `format_price()`, `ordinal()`, `parse_date()`, `clean()` | Small helpers |
 | `dedupe()` | Collapses events identical on title + start + end + location |
 | The guards in `main()` | Two behaviors worth preserving, described below |
@@ -35,7 +39,7 @@ then leaves yesterday's list up and fails the Action loudly, instead of wiping t
 nothing. This keeps the repo free of no-op commits and makes the "last updated" date on the
 page mean the list changed then, rather than a job ran then.
 
-## build.py: rewrite these
+## build.py: rewrite these (done 2026-09-30)
 
 The render layer was written for the abandoned Squarespace approach. It produces a card grid
 that does not meet the brand spec or the crawlability criteria.
@@ -47,7 +51,7 @@ that does not meet the brand spec or the crawlability criteria.
 | `PAGE` | No logo, no `robots`/`sitemap`/`llms` siblings, thin JSON-LD |
 | `render_page()` | JSON-LD omits price and only handles `ItemList`. Needs full `Event` objects |
 
-## build.py: add these
+## build.py: add these (done 2026-09-30, logo still a placeholder)
 
 - `robots.txt` emitter, explicitly allowing GPTBot, ClaudeBot, PerplexityBot,
   Google-Extended, CCBot
@@ -67,11 +71,20 @@ that does not meet the brand spec or the crawlability criteria.
 | `TITO_ACCOUNT` | `sense-respond-learning` | Account slug |
 | `OUT_DIR` | `public` | Output directory. Matches the Netlify publish directory |
 | `DEDUPE` | `true` | Collapses identical events |
-| `SITE_URL` | unset | Canonical URL. Set to `https://workshops.senseandrespond.co` |
+| `SITE_URL` | `https://workshops.senseandrespond.co` | Canonical URL, used in sitemap, robots and JSON-LD |
 
-## Tests that were run
+Options: `--from-json PATH` builds from a saved `workshops.json` (e.g.
+`docs/sample-workshops.json`, with `OUT_DIR` pointed somewhere other than `public/`).
+`--force` writes even when nothing changed.
 
-Worth re-running after the rewrite:
+## Tests
+
+All of these are now in `tests/` and pass (41 tests, 2026-09-30). One caveat: the timeline
+test originally ran against real markup (11 events). That markup no longer exists, so it now
+runs against a synthetic fixture built from the documented class names, plus the real
+30 September empty page.
+
+The original list:
 
 - Timeline scrape against real markup: 11 events parsed, past events correctly excluded,
   HTML entities unescaped, location captured

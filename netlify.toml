@@ -1,0 +1,21 @@
+# Netlify serves public/ as-is. There is no build command: the GitHub Action builds and
+# commits public/, and Netlify deploys on push. See PROJECT_BRIEF.md.
+
+[build]
+  publish = "public"
+  # Skip the deploy when a push doesn't touch the published files (docs, tests, build.py).
+  # Exit 0 means "skip". On a first or uncached build Netlify sets CACHED_COMMIT_REF equal to
+  # COMMIT_REF, which would read as "no change", so that case always deploys. Any git error
+  # (e.g. the old commit missing from a shallow clone) also deploys.
+  ignore = '[ "$CACHED_COMMIT_REF" != "$COMMIT_REF" ] && git diff --quiet "$CACHED_COMMIT_REF" "$COMMIT_REF" -- public/ netlify.toml'
+
+# The text files contain en dashes and other non-ASCII characters, so state the charset.
+[[headers]]
+  for = "/llms.txt"
+  [headers.values]
+    Content-Type = "text/plain; charset=utf-8"
+
+[[headers]]
+  for = "/robots.txt"
+  [headers.values]
+    Content-Type = "text/plain; charset=utf-8"

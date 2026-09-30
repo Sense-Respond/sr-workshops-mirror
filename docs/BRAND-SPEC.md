@@ -1,7 +1,13 @@
 # Brand spec for the workshops page
 
-Extracted from **SR Brand Guidelines 2025** (client version, 11 June 2025), cross-checked
-against the live senseandrespond.co. Page numbers refer to the PDF.
+Extracted from **SR Brand Guidelines 2025** (client version, 11 June 2025), which is in this
+folder as `S&R Brand Guidelines 2025 for client 20250611.pdf`. It is gitignored, so it exists
+only on machines where someone has put it there. Page numbers refer to the PDF.
+
+**The PDF governs (decided 2026-09-30).** This file is a summary. Where the two differ, the PDF
+wins. Diverge only where the guide is silent or following it would cause a real problem, such
+as readability, and record each divergence in `PROJECT_BRIEF.md` so it can go to Natalia.
+Corrections from checking this file against the PDF on 2026-09-30 are marked **(corrected)**.
 
 ---
 
@@ -42,8 +48,11 @@ Scale these down proportionally at phone width. 72px H1 needs to clamp.
 |---|---|
 | Deep Teal | `#345C60` |
 | Iron | `#39393D` |
-| (green) | `#00A651` |
-| (blue) | `#0072BC` |
+| Violet (sic) | `#00A651` |
+| New Leaf (sic) | `#0072BC` |
+
+**(corrected)** The PDF names these two on p.13: the green `#00A651` is labelled "Violet" and
+the blue `#0072BC` "New Leaf". The names look mislabelled. Worth raising with Natalia.
 
 **Neutrals.** To balance the brights. The guide says these are the website shades.
 
@@ -59,16 +68,37 @@ The guide specifies this for our exact use case:
 
 > "Use this gradient to highlight date, time and place section in workshops, with text in white"
 
-Horizontal, left to right: Cerulean into green into Spring Green, with **white text**.
+Horizontal, left to right, three stops, with **white text**.
+
+**(corrected)** The stops, read from the gradient definition inside the PDF (page 21, a
+three-stop axial shading in RGB), are:
 
 ```css
-background: linear-gradient(90deg, #05ACBD 0%, #00A651 50%, #C0D72F 100%);
+background: linear-gradient(90deg, #05AABC 0%, #008F23 50%, #BFD630 100%);
 color: #FFFFFF;
 ```
 
-Use it for the date band on each workshop card. Check contrast at the lime end. White on
-`#C0D72F` is weak, so consider stopping the gradient short of full Spring Green, or weighting
-the text area toward the Cerulean side.
+This file used to give the middle stop as `#00A651`. It is `#008F23`, a darker green that is
+not in the palette. The ends are within one step of Cerulean `#05ACBD` and Spring Green
+`#C0D72F`.
+
+Contrast of white text on it (WCAG):
+
+| Point | Colour | White text |
+|---|---|---|
+| 0% | `#05AABC` | 2.8:1 |
+| 50% | `#008F23` | 4.2:1 |
+| 100% | `#BFD630` | 1.6:1 |
+
+White clears 3:1 (the bar for large text) only from about 8% to 68% across, and never reaches
+4.5:1 (the bar for body text).
+
+**On the page (decided 2026-09-30):** the gradient trimmed to its 8%-68% span, with white
+22px Roboto Bold text. A divergence from the guide, recorded in `PROJECT_BRIEF.md`:
+
+```css
+background: linear-gradient(90deg, #04A6A4 0%, #008F23 70%, #45A928 100%);
+```
 
 ## Copy highlights (guide p.18)
 
@@ -83,14 +113,21 @@ underline. Use rarely.
 
 ## Where the guide and the live site disagree
 
-**Decision: match the live site.** Josh's call, so the new page doesn't read as a different
-brand. Flag the drift to Natalia separately.
+**Superseded 2026-09-30.** This used to say "match the live site". The rule is now that the
+guide governs, so where they disagree the page follows the guide. The drift itself still goes
+to Natalia.
 
 | Element | Guide says | Live site does | Use |
 |---|---|---|---|
-| Buttons | Iron `#39393D` rectangle | Deep Teal `#345C60` pill, `border-radius: 300px`, white text | **Live site** |
-| Deep Teal role | Secondary, sparing accent | Main action color throughout | **Live site** |
-| Body size | 18px | about 14px | **18px, per the guide** |
+| Buttons | Dark rectangle, white text (p.19 mockup) | Deep Teal `#345C60` pill, `border-radius: 300px`, white text | **Guide.** Iron `#39393D` rectangle, Roboto Bold 24px |
+| Deep Teal role | Secondary, sparing accent | Main action color throughout | **Guide.** Sparing: links and button hover only |
+| Body size | 18px | about 14px | **Guide.** 18px |
+
+The p.19 mockup's button and heading colour is `#343131`, which is not a palette value. The
+page uses the nearest palette colour, Iron `#39393D`.
+
+The mockup also sets H1 in capitals (as does the p.18 sample), with dark headings on light
+ground. The page follows both.
 
 Other values sampled from the live site, for reference:
 

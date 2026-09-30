@@ -105,6 +105,14 @@ confirm the exact menu path without logging into the account.
 
 ## 5. The public timeline is server-rendered (useful fallback)
 
+**Correction, 2026-09-30. No longer true.** Fetched on 30 September 2026 with a browser, curl
+and GPTBot user agent: `https://ti.to/sense-respond-learning/` now returns an empty
+`<tito-events account="sense-respond-learning"></tito-events>` and no event markup. The list is
+rendered client-side. So the scrape fallback returns zero events, and the ti.to page is now
+invisible to AI crawlers, which is the problem this project fixes. The response is saved as
+`tests/fixtures/timeline-2026-09-30-client-rendered.html`. `build.py` now uses the scrape only
+when no token is set, and the section below is kept as a record.
+
 `https://ti.to/sense-respond-learning/` returns the full event list in its HTML. The
 `<tito-events>` custom element is hydrated by `js.tito.io/v2/with/inline`, but the markup is
 already there in the server response.
@@ -167,7 +175,7 @@ Who We Are, Who We Serve, Resource Hub, Books, Blog, Contact.
 This was built first and it was wrong. It renders the workshop list client-side, which means
 GPTBot, ClaudeBot and PerplexityBot see an empty div. It moves the invisibility problem from
 ti.to onto our own domain. The file is kept at
-`code/DEPRECATED-squarespace-code-block.html` as a record of what not to ship.
+`docs/DEPRECATED-squarespace-code-block.html` as a record of what not to ship.
 
 **2. The `<tito-events>` embed widget.**
 Ti.to offers `<tito-events account="sense-respond-learning">`, which renders the whole event

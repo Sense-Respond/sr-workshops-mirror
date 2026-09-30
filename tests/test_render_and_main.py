@@ -1,0 +1,258 @@
+"""Tests for the render layer and main() guards. Run: python3 -m unittest discover tests"""
+
+import contextlib
+import io
+import json
+import os
+import re
+import sys
+import tempfile
+import unittest
+import urllib.error
+import xml.dom.minidom
+from unittest import mock
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
+import build  # noqa: E402
+import verify  # noqa: E402
+
+SAMPLE = os.path.join(ROOT, "docs", "sample-workshops.json")
+
+
+def sample_events():
+    with open(SAMPLE, encoding="utf-8") as fh:
+        return json.load(fh)["events"]
+
+
+def run_main(*argv):
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        code = build.main(list(argv))
+    return code, out.getvalue()
+
+
+def ev(slug, title="Lean Product Strategy", start="2026-11-03", end="2026-11-05", **kw):
+    e = {"title": title, "slug": slug, "url": f"https://ti.to/sense-respond-learning/{slug}",
+         "start": start, "end": end, "date_label": "x", "location": None, "banner": None,
+         "price_from": None, "currency": "USD"}
+    e.update(kw)
+    return e
+
+
+class DateMarkup(unittest.TestCase):
+    CASES = [("2026-10-13", "2026-10-27"), ("2026-09-17", "2026-10-08"),
+             ("2026-12-30", "2027-01-02"), ("2026-09-22", "2026-09-22"), ("2026-09-22", None)]
+
+    def test_text_matches_format_range(self):
+        for start, end in self.CASES:
+            got = re.sub(r"<[^>]+>", "", build.date_range_html({"start": start, "end": end}))
+            want = build.format_range(build.parse_date(start), build.parse_date(end))
+            self.assertEqual(got, want)
+
+    def test_every_date_has_time_element(self):
+        h = build.date_range_html({"start": "2026-09-17", "end": "2026-10-08"})
+        self.assertEqual(re.findall(r'datetime="([^"]+)"', h), ["2026-09-17", "2026-10-08"])
+        h = build.date_range_html({"start": "2026-09-22", "end": "2026-09-22"})
+        self.assertEqual(re.findall(r'datetime="([^"]+)"', h), ["2026-09-22"])
+
+    def test_no_dates_falls_back_to_label(self):
+        self.assertEqual(build.date_range_html({"date_label": "Soon & later"}), "Soon &amp; later")
+
+
+class Online(unittest.TestCase):
+    def test_online_detection(self):
+        for loc in (None, "", "Online", "ONLINE", "Live online", "Zoom", "zoom (link sent)"):
+            self.assertTrue(build.is_online(loc), loc)
+        for loc in ("Berlin", "Zoomania Hall", "London, UK"):
+            self.assertFalse(build.is_online(loc), loc)
+
+    def test_schema_by_location(self):
+        online = build.event_schema(ev("a", location="Zoom"), "a")
+        self.assertEqual(online["eventAttendanceMode"], "https://schema.org/OnlineEventAttendanceMode")
+        self.assertEqual(online["location"]["@type"], "VirtualLocation")
+        offline = build.event_schema(ev("b", location="Berlin"), "b")
+        self.assertEqual(offline["eventAttendanceMode"], "https://schema.org/OfflineEventAttendanceMode")
+        self.assertEqual(offline["location"], {"@type": "Place", "name": "Berlin", "address": "Berlin"})
+
+
+class Page(unittest.TestCase):
+    def render(self, events):
+        return build.render_page(events, "30 Sep 2026, 11:00 UTC", "2026-09-30T11:00:00+00:00")
+
+    def jsonld(self, page):
+        return json.loads(re.search(r'<script type="application/ld\+json">(.*?)</script>',
+                                    page, re.S).group(1))
+
+    def test_every_title_in_raw_html(self):
+        events = sample_events()
+        p = verify.PageParser()
+        p.feed(self.render(events))
+        self.assertEqual(p.titles, [e["title"] for e in events])
+        self.assertEqual(p.article_ids, [e["slug"] for e in events])
+
+    def test_no_javascript_beyond_jsonld(self):
+        page = self.render(sample_events())
+        scripts = re.findall(r"<script\b[^>]*>", page)
+        self.assertEqual(scripts, ['<script type="application/ld+json">'])
+
+    def test_full_event_jsonld(self):
+        e = ev("okr", price_from=1200.0, banner="https://example.com/b.png")
+        graph = self.jsonld(self.render([e]))["@graph"]
+        event = [n for n in graph if n["@type"] == "Event"][0]
+        self.assertEqual(event["name"], "Lean Product Strategy")
+        self.assertEqual(event["startDate"], "2026-11-03")
+        self.assertEqual(event["endDate"], "2026-11-05")
+        self.assertEqual(event["offers"], {"@type": "Offer", "url": e["url"],
+                                           "price": "1200.00", "priceCurrency": "USD"})
+        self.assertEqual(event["eventAttendanceMode"], "https://schema.org/OnlineEventAttendanceMode")
+        self.assertEqual(event["organizer"], {"@id": "https://senseandrespond.co/#org"})
+        self.assertIn({"@type": "Organization", "@id": "https://senseandrespond.co/#org",
+                       "name": "Sense & Respond Learning", "url": "https://senseandrespond.co"}, graph)
+        self.assertEqual(event["@id"], "https://workshops.senseandrespond.co/#okr")
+
+    def test_jsonld_cannot_close_script_tag(self):
+        evil = ev("x", title="Bad </script><script>alert(1)</script>")
+        page = self.render([evil])
+        block = re.search(r'<script type="application/ld\+json">(.*?)</script>', page, re.S).group(1)
+        self.assertNotIn("<", block)
+        self.assertEqual(self.jsonld(page)["@graph"][1]["name"], evil["title"])
+        self.assertIn("Bad &lt;/script&gt;", page)  # escaped in the visible HTML too
+
+    def test_anchor_ids_unique_and_safe(self):
+        self.assertEqual(build.assign_anchors([ev("A b/c"), ev("a-b-c"), ev("")]),
+                         ["a-b-c", "a-b-c-2", "workshop"])
+
+    def test_empty_page(self):
+        page = self.render([])
+        self.assertIn("No public workshops are scheduled right now", page)
+        self.assertEqual(self.jsonld(page)["@graph"][0]["@type"], "Organization")
+
+    def test_date_band_and_lede(self):
+        page = self.render([ev("a")])
+        self.assertIn("linear-gradient(90deg,#04A6A4 0%,#008F23 70%,#45A928 100%)", page)
+        self.assertIn('<h2 class="lede-head">Build these skills, your way</h2>', page)
+        self.assertIn("wherever you’re located", page)
+
+class Siblings(unittest.TestCase):
+    def test_robots_allows_ai_crawlers(self):
+        robots = build.render_robots()
+        for bot in ("GPTBot", "ClaudeBot", "PerplexityBot", "Google-Extended", "CCBot"):
+            self.assertIn(f"User-agent: {bot}\nAllow: /\n", robots)
+        self.assertNotIn("Disallow", robots)
+        self.assertIn("Sitemap: https://workshops.senseandrespond.co/sitemap.xml", robots)
+
+    def test_sitemap_is_valid_xml(self):
+        doc = xml.dom.minidom.parseString(build.render_sitemap("2026-09-30T11:00:00+00:00"))
+        self.assertEqual(doc.getElementsByTagName("loc")[0].firstChild.data,
+                         "https://workshops.senseandrespond.co/")
+        self.assertEqual(doc.getElementsByTagName("lastmod")[0].firstChild.data, "2026-09-30")
+
+    def test_llms_lists_every_workshop(self):
+        events = sample_events()
+        text = build.render_llms(events, "30 Sep 2026")
+        self.assertTrue(text.startswith("# Sense & Respond Learning"))
+        for e in events:
+            self.assertIn(e["url"], text)
+        self.assertIn(r"[Odd \[title\]]", build.render_llms([ev("o", title="Odd [title]")], "x"))
+
+
+class MainGuards(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.out = os.path.join(self.tmp.name, "public")
+        self.patches = [mock.patch.object(build, "OUT_DIR", self.out),
+                        mock.patch.object(build, "TOKEN", "")]
+        for p in self.patches:
+            p.start()
+
+    def tearDown(self):
+        for p in self.patches:
+            p.stop()
+        self.tmp.cleanup()
+
+    def snapshot(self):
+        files = {}
+        for name in sorted(os.listdir(self.out)):
+            with open(os.path.join(self.out, name), encoding="utf-8") as fh:
+                files[name] = fh.read()
+        return files
+
+    def test_writes_all_files(self):
+        code, _ = run_main("--from-json", SAMPLE)
+        self.assertEqual(code, 0)
+        self.assertEqual(sorted(os.listdir(self.out)),
+                         ["index.html", "llms.txt", "robots.txt", "sitemap.xml", "workshops.json"])
+        self.assertEqual(verify.main(["verify.py", self.out]), 0)
+
+    def test_no_op_guard_holds_timestamp(self):
+        run_main("--from-json", SAMPLE)
+        before = self.snapshot()
+        code, out = run_main("--from-json", SAMPLE)
+        self.assertEqual(code, 0)
+        self.assertIn("Nothing written", out)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_template_version_change_rewrites(self):
+        run_main("--from-json", SAMPLE)
+        with mock.patch.object(build, "TEMPLATE_VERSION", build.TEMPLATE_VERSION + 1):
+            code, out = run_main("--from-json", SAMPLE)
+        self.assertEqual(code, 0)
+        self.assertIn("Wrote", out)
+        with open(os.path.join(self.out, "workshops.json"), encoding="utf-8") as fh:
+            self.assertEqual(json.load(fh)["template_version"], build.TEMPLATE_VERSION + 1)
+
+    def test_force_rewrites(self):
+        run_main("--from-json", SAMPLE)
+        code, out = run_main("--from-json", SAMPLE, "--force")
+        self.assertEqual(code, 0)
+        self.assertIn("Wrote", out)
+
+    def test_empty_page_guard(self):
+        run_main("--from-json", SAMPLE)
+        before = self.snapshot()
+        with mock.patch.object(build, "fetch_from_timeline", return_value=[]):
+            code, out = run_main()
+        self.assertEqual(code, 1)
+        self.assertIn("Keeping the existing files", out)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_empty_page_guard_beats_force(self):
+        run_main("--from-json", SAMPLE)
+        with mock.patch.object(build, "fetch_from_timeline", return_value=[]):
+            code, _ = run_main("--force")
+        self.assertEqual(code, 1)
+
+    def test_api_failure_with_token_writes_nothing_and_does_not_scrape(self):
+        run_main("--from-json", SAMPLE)
+        before = self.snapshot()
+        err = urllib.error.HTTPError("https://api.tito.io", 401, "Unauthorized", {}, None)
+        with mock.patch.object(build, "TOKEN", "expired"), \
+                mock.patch.object(build, "fetch_from_api", side_effect=err), \
+                mock.patch.object(build, "fetch_from_timeline") as scrape:
+            code, out = run_main()
+        self.assertEqual(code, 1)
+        self.assertIn("ERROR: Ti.to API fetch failed", out)
+        scrape.assert_not_called()
+        self.assertEqual(self.snapshot(), before)
+
+    def test_api_timeout_with_token_fails(self):
+        with mock.patch.object(build, "TOKEN", "t"), \
+                mock.patch.object(build, "fetch_from_api", side_effect=TimeoutError("timed out")):
+            code, _ = run_main()
+        self.assertEqual(code, 1)
+        self.assertFalse(os.path.exists(self.out))
+
+    def test_same_duplicate_survives_whatever_the_order(self):
+        pair = [ev("lps-2"), ev("lps-1")]
+        survivors = set()
+        for events in (pair, list(reversed(pair))):
+            with mock.patch.object(build, "fetch_from_timeline", return_value=[dict(e) for e in events]):
+                run_main("--force")
+            with open(os.path.join(self.out, "workshops.json"), encoding="utf-8") as fh:
+                survivors.add(tuple(e["slug"] for e in json.load(fh)["events"]))
+        self.assertEqual(survivors, {("lps-1",)})
+
+
+if __name__ == "__main__":
+    unittest.main()

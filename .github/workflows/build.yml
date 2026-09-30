@@ -1,0 +1,71 @@
+# Rebuilds public/ from the Ti.to API daily and commits it when the workshop data changed.
+# Netlify deploys on push. See PROJECT_BRIEF.md.
+#
+# Fails loudly, and leaves the published page alone, when the Ti.to token is missing or
+# expired, the API is down, the API returns zero events after a good build, or verify.py
+# finds the raw HTML doesn't match the data.
+
+name: Build workshops page
+
+on:
+  schedule:
+    - cron: "0 11 * * *" # 11:00 UTC daily
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Rewrite the files even if nothing changed"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-workshops
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Test
+        run: python -m unittest discover tests
+
+      - name: Check the token is set
+        # Without it build.py would fall back to the public timeline, which is
+        # client-rendered and returns nothing. Fail here with a clear message instead.
+        env:
+          TITO_API_TOKEN: ${{ secrets.TITO_API_TOKEN }}
+        run: |
+          if [ -z "$TITO_API_TOKEN" ]; then
+            echo "::error::TITO_API_TOKEN secret is not set."
+            exit 1
+          fi
+
+      - name: Build
+        env:
+          TITO_API_TOKEN: ${{ secrets.TITO_API_TOKEN }}
+          SITE_URL: https://workshops.senseandrespond.co
+        run: python build.py ${{ inputs.force && '--force' || '' }}
+
+      - name: Verify
+        run: python verify.py public
+
+      - name: Commit if changed
+        run: |
+          git add public
+          if git diff --cached --quiet; then
+            echo "No change to public/. Nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update workshops page ($(date -u +%Y-%m-%d))"
+          git push
