@@ -70,61 +70,136 @@ class Prices(unittest.TestCase):
 
 
 def api_fixture(today):
-    """A JSON:API payload shaped like Ti.to v2 /events?include=releases."""
-    iso = lambda d: d.isoformat() + "T09:00:00.000-05:00"  # noqa: E731
+    """Ti.to Admin API v3 responses, keyed by path: the events list and each event's releases."""
+    iso = lambda d: d.isoformat()  # noqa: E731
     later = today + dt.timedelta(days=30)
 
-    def event(eid, slug, releases=(), **attrs):
-        base = {"title": f"Event {slug}", "slug": slug, "start-date": iso(later),
-                "end-date": iso(later + dt.timedelta(days=2)), "live": True,
-                "private": False, "test-mode": False, "currency": "USD", "location": None}
+    def event(slug, **attrs):
+        base = {"id": slug, "title": f"Event {slug}", "slug": slug,
+                "start_date": iso(later), "end_date": iso(later + dt.timedelta(days=2)),
+                "start_at": iso(later) + "T09:00:00.000-05:00",
+                "end_at": iso(later + dt.timedelta(days=2)) + "T11:00:00.000-05:00",
+                "timezone": "Central Time (US & Canada)",
+                "live": True, "private": False, "test_mode": False, "currency": "USD",
+                "location": None, "banner_url": f"https://example.com/{slug}.png"}
         base.update(attrs)
-        return {"id": eid, "type": "events", "attributes": base,
-                "relationships": {"releases": {"data": [
-                    {"id": r, "type": "releases"} for r in releases]}}}
+        return base
 
     events = [
-        event("1", "public", releases=["r1", "r2", "r3", "r4"]),
-        event("2", "private", private=True),
-        event("3", "test", **{"test-mode": True}),
-        event("4", "not-live", live=False),
-        event("5", "finished", **{"start-date": iso(today - dt.timedelta(days=5)),
-                                   "end-date": iso(today - dt.timedelta(days=1))}),
-        event("6", "ends-today", **{"start-date": iso(today - dt.timedelta(days=2)),
-                                     "end-date": iso(today)}),
+        event("public"),
+        event("private", private=True),
+        event("test", test_mode=True),
+        event("not-live", live=False),
+        event("finished", start_date=iso(today - dt.timedelta(days=5)),
+              end_date=iso(today - dt.timedelta(days=1))),
+        event("ends-today", start_date=iso(today - dt.timedelta(days=2)), end_date=iso(today)),
     ]
-    included = [
-        {"id": "r1", "type": "releases", "attributes": {"price": "1200.0"}},
-        {"id": "r2", "type": "releases", "attributes": {"price": "100.0", "secret": True}},
-        {"id": "r3", "type": "releases", "attributes": {"price": "50.0", "archived": True}},
-        {"id": "r4", "type": "releases", "attributes": {"price": "0.0", "not-a-ticket": True}},
-    ]
-    return {"data": events, "included": included, "links": {}}
+    releases = {
+        "public": [
+            {"id": 1, "price": "1200.0", "sold_out": False},
+            {"id": 2, "price": "100.0", "secret": True},
+            {"id": 3, "price": "50.0", "archived": True},
+            {"id": 4, "price": "0.0", "not_a_ticket": True},
+        ],
+        "ends-today": [
+            {"id": 5, "price": 900, "sold_out": True},
+            {"id": 6, "price": 50, "secret": True, "sold_out": False},  # secret: doesn't count
+        ],
+    }
+    responses = {"events": {"events": events, "meta": {"next_page": None}}}
+    for slug in [e["slug"] for e in events]:
+        responses[f"{slug}/releases"] = {"releases": releases.get(slug, []),
+                                         "meta": {"next_page": None}}
+    return responses
+
+
+def fake_get(responses, calls=None):
+    """Stand-in for build.get that serves v3 fixtures by path and page number."""
+    def get(url, headers=None, timeout=30):
+        assert url.startswith("https://api.tito.io/v3/sense-respond-learning/"), url
+        assert headers["Authorization"].startswith("Token token=")
+        assert headers["Accept"] == "application/json"
+        path, _, query = url[len("https://api.tito.io/v3/sense-respond-learning/"):].partition("?")
+        page = int(dict(p.split("=") for p in query.split("&"))["page%5Bnumber%5D"])
+        if calls is not None:
+            calls.append((path, page))
+        body = responses[path]
+        return json.dumps(body[page - 1] if isinstance(body, list) else body)
+    return get
 
 
 class ApiPath(unittest.TestCase):
     def test_filters_and_pricing(self):
         today = dt.date.today()
-        payload = json.dumps(api_fixture(today))
-        with mock.patch.object(build, "get", return_value=payload):
+        calls = []
+        with mock.patch.object(build, "get", fake_get(api_fixture(today), calls)):
             events = build.fetch_from_api()
-        slugs = [e["slug"] for e in events]
-        self.assertEqual(slugs, ["public", "ends-today"])
+        self.assertEqual([e["slug"] for e in events], ["public", "ends-today"])
         public = events[0]
-        self.assertEqual(public["price_from"], 1200.0)  # secret, archived, not-a-ticket ignored
+        self.assertEqual(public["price_from"], 1200.0)  # secret, archived, not_a_ticket ignored
         self.assertEqual(public["currency"], "USD")
         self.assertEqual(public["url"], "https://ti.to/sense-respond-learning/public")
         self.assertEqual(public["start"], (today + dt.timedelta(days=30)).isoformat())
+        self.assertEqual(public["banner"], "https://example.com/public.png")
+        self.assertEqual(public["timezone"], "Central Time (US & Canada)")
+        self.assertIs(public["sold_out"], False)
+        self.assertIs(events[1]["sold_out"], True)
+        # Releases are fetched only for the events that survive the filters.
+        self.assertEqual([c[0] for c in calls],
+                         ["events", "public/releases", "ends-today/releases"])
 
-    def test_follows_next_link(self):
+    def test_follows_next_page(self):
         today = dt.date.today()
-        page1 = api_fixture(today)
-        page2 = {"data": [page1["data"].pop()], "included": [], "links": {}}
-        page1["links"] = {"next": "https://api.tito.io/v2/x/events?page=2"}
-        responses = iter([json.dumps(page1), json.dumps(page2)])
-        with mock.patch.object(build, "get", side_effect=lambda *a, **k: next(responses)):
+        responses = api_fixture(today)
+        everything = responses["events"]["events"]
+        responses["events"] = [{"events": everything[:3], "meta": {"next_page": 2}},
+                               {"events": everything[3:], "meta": {"next_page": None}}]
+        calls = []
+        with mock.patch.object(build, "get", fake_get(responses, calls)):
             events = build.fetch_from_api()
         self.assertIn("ends-today", [e["slug"] for e in events])
+        self.assertEqual(calls[:2], [("events", 1), ("events", 2)])
+
+
+class SoldOut(unittest.TestCase):
+    def test_rules(self):
+        self.assertIsNone(build.sold_out([]))
+        self.assertIsNone(build.sold_out([{"secret": True, "sold_out": True}]))
+        self.assertTrue(build.sold_out([{"sold_out": True}, {"state_name": "sold_out"}]))
+        self.assertFalse(build.sold_out([{"sold_out": True}, {"sold_out": False}]))
+        self.assertTrue(build.sold_out([{"sold_out": True}, {"archived": True}]))
+
+
+class Times(unittest.TestCase):
+    def label(self, start_at, end_at, tz):
+        return build.format_times(*build.local_times(
+            {"start_at": start_at, "end_at": end_at, "timezone": tz}))
+
+    def test_rails_zone_name(self):
+        self.assertEqual(self.label("2026-10-13T09:00:00.000-05:00", "2026-10-27T11:00:00.000-05:00",
+                                    "Central Time (US & Canada)"), "9:00–11:00 AM CDT")
+
+    def test_iana_zone_and_meridiem_change(self):
+        self.assertEqual(self.label("2026-12-02T10:00:00+01:00", "2026-12-02T16:30:00+01:00",
+                                    "Europe/Berlin"), "10:00 AM–4:30 PM CET")
+
+    def test_utc_input_converted_to_event_zone(self):
+        self.assertEqual(self.label("2026-10-13T14:00:00Z", "2026-10-13T16:00:00Z",
+                                    "America/Chicago"), "9:00–11:00 AM CDT")
+
+    def test_zone_without_abbreviation_uses_offset(self):
+        self.assertEqual(self.label("2026-10-10T18:00:00+05:30", "2026-10-10T22:00:00+05:30",
+                                    "Chennai"), "6:00–10:00 PM IST")
+        self.assertEqual(self.label("2026-10-28T17:00:00-03:00", "2026-10-28T19:30:00-03:00",
+                                    "Buenos Aires"), "5:00–7:30 PM UTC-03:00")
+
+    def test_unknown_zone_uses_timestamp_offset(self):
+        self.assertEqual(self.label("2026-10-13T09:00:00-05:00", "2026-10-13T11:00:00-05:00",
+                                    "Somewhere Odd"), "9:00–11:00 AM UTC-05:00")
+
+    def test_missing_or_naive_gives_nothing(self):
+        self.assertEqual(self.label(None, None, "UTC"), "")
+        self.assertEqual(self.label("2026-10-13T09:00:00", "2026-10-13T11:00:00", "UTC"), "")
 
 
 class TimelineScrape(unittest.TestCase):

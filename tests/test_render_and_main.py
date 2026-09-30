@@ -134,6 +134,50 @@ class Page(unittest.TestCase):
         self.assertIn('<h2 class="lede-head">Build these skills, your way</h2>', page)
         self.assertIn("wherever you’re located", page)
 
+class TimesAndSoldOut(unittest.TestCase):
+    TIMED = dict(start_at="2026-11-03T09:00:00.000-06:00", end_at="2026-11-05T11:00:00.000-06:00",
+                 timezone="Central Time (US & Canada)")
+
+    def render(self, events):
+        return build.render_page(events, "30 Sep 2026, 11:00 UTC", "2026-09-30T11:00:00+00:00")
+
+    def event_ld(self, e):
+        return build.event_schema(e, "a")
+
+    def test_time_line_in_band(self):
+        page = self.render([ev("a", **self.TIMED)])
+        self.assertIn('<p class="ws-time"><time datetime="2026-11-03T09:00-06:00">9:00</time>–'
+                      '<time datetime="2026-11-05T11:00-06:00">11:00 AM CST</time></p>', page)
+
+    def test_no_time_line_without_times(self):
+        self.assertNotIn("ws-time", self.render([ev("a")]))
+
+    def test_jsonld_uses_datetimes_when_known(self):
+        ld = self.event_ld(ev("a", **self.TIMED))
+        self.assertEqual(ld["startDate"], "2026-11-03T09:00:00-06:00")
+        self.assertEqual(ld["endDate"], "2026-11-05T11:00:00-06:00")
+        self.assertEqual(self.event_ld(ev("b"))["startDate"], "2026-11-03")
+
+    def test_availability(self):
+        self.assertEqual(self.event_ld(ev("a", sold_out=True))["offers"]["availability"],
+                         "https://schema.org/SoldOut")
+        self.assertEqual(self.event_ld(ev("a", sold_out=False))["offers"]["availability"],
+                         "https://schema.org/InStock")
+        self.assertNotIn("availability", self.event_ld(ev("a"))["offers"])
+
+    def test_sold_out_card(self):
+        page = self.render([ev("a", sold_out=True, price_from=900.0)])
+        self.assertIn('<p class="ws-price">Sold out</p>', page)
+        self.assertIn(">See details<span", page)
+        self.assertNotIn("From $900", page)
+        self.assertIn(">Register<span", self.render([ev("b", sold_out=False)]))
+
+    def test_llms_has_times_and_sold_out(self):
+        text = build.render_llms([ev("a", sold_out=True, **self.TIMED)], "x")
+        self.assertIn("9:00–11:00 AM CST", text)
+        self.assertIn("Sold out", text)
+
+
 class Siblings(unittest.TestCase):
     def test_robots_allows_ai_crawlers(self):
         robots = build.render_robots()

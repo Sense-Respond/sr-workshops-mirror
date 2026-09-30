@@ -39,7 +39,9 @@ import os
 import re
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
+import zoneinfo
 
 ACCOUNT = os.environ.get("TITO_ACCOUNT", "sense-respond-learning")
 TOKEN = os.environ.get("TITO_API_TOKEN", "").strip()
@@ -49,10 +51,10 @@ SITE_URL = (os.environ.get("SITE_URL", "").strip()
             or "https://workshops.senseandrespond.co").rstrip("/")
 
 # Bump whenever the rendered output changes, so the no-change guard lets the new design ship.
-TEMPLATE_VERSION = 1
+TEMPLATE_VERSION = 2
 
 TIMELINE_URL = f"https://ti.to/{ACCOUNT}/"
-API_BASE = f"https://api.tito.io/v2/{ACCOUNT}"
+API_BASE = f"https://api.tito.io/v3/{ACCOUNT}"
 USER_AGENT = "sr-workshops-mirror/1.0 (+https://senseandrespond.co)"
 
 CURRENCY_SYMBOLS = {"USD": "$", "EUR": "€", "GBP": "£", "CAD": "CA$", "AUD": "A$"}
@@ -69,49 +71,48 @@ def get(url, headers=None, timeout=30):
 
 
 # --------------------------------------------------------------------------
-# Source 1: Ti.to Admin API
+# Source 1: Ti.to Admin API v3 (v2 was retired; it 404s as of 30 September 2026)
 # --------------------------------------------------------------------------
 
+def api_get_all(path, key, headers):
+    """GET a v3 list endpoint, following meta.next_page. Returns the items under `key`."""
+    items, page, guard = [], 1, 0
+    while page and guard < 25:
+        guard += 1
+        query = urllib.parse.urlencode({"page[number]": page, "page[size]": 100})
+        payload = json.loads(get(f"{API_BASE}/{path}?{query}", headers))
+        items.extend(payload.get(key) or [])
+        page = (payload.get("meta") or {}).get("next_page")
+    return items
+
+
 def fetch_from_api():
-    """Return a list of event dicts, or raise."""
+    """Return a list of event dicts, or raise. Ti.to Admin API v3."""
     headers = {
         "Authorization": f"Token token={TOKEN}",
-        "Accept": "application/vnd.api+json",
+        "Accept": "application/json",
     }
-    url = f"{API_BASE}/events?include=releases"
-    events, included, guard = [], [], 0
-
-    while url and guard < 25:
-        guard += 1
-        payload = json.loads(get(url, headers))
-        events.extend(payload.get("data") or [])
-        included.extend(payload.get("included") or [])
-        url = ((payload.get("links") or {}).get("next")) or None
-
-    # id -> release attributes, so we can price each event
-    releases = {r["id"]: r.get("attributes", {}) for r in included if r.get("type") == "releases"}
+    events = api_get_all("events", "events", headers)  # upcoming events only, per the v3 docs
 
     today = dt.date.today()
     out = []
-    for ev in events:
-        a = ev.get("attributes", {}) or {}
-
+    for a in events:
         # Skip anything the public can't buy.
-        if a.get("private") or a.get("test-mode") or not a.get("live", True):
+        if a.get("private") or a.get("test_mode") or not a.get("live", True):
             continue
 
-        start = parse_date(a.get("start-date"))
-        end = parse_date(a.get("end-date")) or start
+        start = parse_date(a.get("start_date"))
+        end = parse_date(a.get("end_date")) or start
         if end and end < today:
             continue  # already finished
 
-        rel_ids = [
-            r.get("id")
-            for r in (((ev.get("relationships") or {}).get("releases") or {}).get("data") or [])
-        ]
-        price, currency = cheapest_price(rel_ids, releases, a.get("currency"))
+        slug = a.get("slug") or str(a.get("id"))
+        releases = api_get_all(f"{slug}/releases", "releases", headers)
+        by_id = {r.get("id"): r for r in releases}
+        price, currency = cheapest_price(list(by_id), by_id, a.get("currency"))
 
-        slug = a.get("slug") or ev.get("id")
+        banner = a.get("banner_url") or ((a.get("banner") or {}).get("url")
+                                         if isinstance(a.get("banner"), dict) else None)
         out.append({
             "title": (a.get("title") or "").strip(),
             "slug": slug,
@@ -120,12 +121,21 @@ def fetch_from_api():
             "end": end.isoformat() if end else None,
             "date_label": format_range(start, end),
             "location": (a.get("location") or "").strip() or None,
-            "banner": a.get("banner-url"),
+            "banner": banner,
             "price_from": price,
             "currency": currency,
+            "start_at": a.get("start_at"),
+            "end_at": a.get("end_at"),
+            "timezone": a.get("timezone"),
+            "sold_out": sold_out(releases),
         })
 
     return out
+
+
+def is_public_release(r):
+    """A release a member of the public could actually buy."""
+    return bool(r) and not (r.get("archived") or r.get("secret") or r.get("not_a_ticket"))
 
 
 def cheapest_price(rel_ids, releases, fallback_currency):
@@ -133,7 +143,7 @@ def cheapest_price(rel_ids, releases, fallback_currency):
     prices = []
     for rid in rel_ids:
         r = releases.get(rid)
-        if not r or r.get("archived") or r.get("secret") or r.get("not-a-ticket"):
+        if not is_public_release(r):
             continue
         p = r.get("price")
         if p is None:
@@ -143,6 +153,14 @@ def cheapest_price(rel_ids, releases, fallback_currency):
         except (TypeError, ValueError):
             continue
     return (min(prices) if prices else None), (fallback_currency or "USD")
+
+
+def sold_out(releases):
+    """True if every public release is sold out, False if any isn't, None if there are none."""
+    public = [r for r in releases if is_public_release(r)]
+    if not public:
+        return None
+    return all(r.get("sold_out") or r.get("state_name") == "sold_out" for r in public)
 
 
 def parse_date(value):
@@ -231,6 +249,78 @@ def format_range(start, end):
             f"{end:%B} {ordinal(end.day)}, {end.year}")
 
 
+# Ti.to can report time zones by their Rails names. Map the ones our workshops use to IANA
+# zones so we can show a proper abbreviation. Unknown names fall back to a UTC offset.
+RAILS_ZONES = {
+    "Eastern Time (US & Canada)": "America/New_York",
+    "Central Time (US & Canada)": "America/Chicago",
+    "Mountain Time (US & Canada)": "America/Denver",
+    "Pacific Time (US & Canada)": "America/Los_Angeles",
+    "London": "Europe/London", "Dublin": "Europe/Dublin", "Lisbon": "Europe/Lisbon",
+    "Berlin": "Europe/Berlin", "Bern": "Europe/Zurich", "Vienna": "Europe/Vienna",
+    "Amsterdam": "Europe/Amsterdam", "Paris": "Europe/Paris", "Madrid": "Europe/Madrid",
+    "Rome": "Europe/Rome", "Stockholm": "Europe/Stockholm",
+    "Chennai": "Asia/Kolkata", "Kolkata": "Asia/Kolkata", "Mumbai": "Asia/Kolkata",
+    "New Delhi": "Asia/Kolkata", "Buenos Aires": "America/Argentina/Buenos_Aires",
+    "Brasilia": "America/Sao_Paulo", "Mexico City": "America/Mexico_City",
+    "Bogota": "America/Bogota", "Singapore": "Asia/Singapore", "Sydney": "Australia/Sydney",
+    "UTC": "UTC",
+}
+
+
+def parse_datetime(value):
+    """ISO 8601 datetime with an offset, or None. Accepts a trailing Z."""
+    if not value:
+        return None
+    try:
+        d = dt.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return d if d.tzinfo else None
+
+
+def event_zone(name):
+    try:
+        return zoneinfo.ZoneInfo(RAILS_ZONES.get(name, name)) if name else None
+    except (zoneinfo.ZoneInfoNotFoundError, ValueError):
+        return None
+
+
+def local_times(e):
+    """(start, end) as aware datetimes in the event's own zone, or (None, None)."""
+    start, end = parse_datetime(e.get("start_at")), parse_datetime(e.get("end_at"))
+    if not start or not end:
+        return None, None
+    zone = event_zone(e.get("timezone"))
+    if zone:
+        start, end = start.astimezone(zone), end.astimezone(zone)
+    return start, end
+
+
+def zone_label(d):
+    """'CDT' where the zone has a real abbreviation, else 'UTC+05:30'."""
+    name = d.tzname() or ""
+    if re.fullmatch(r"[A-Z]{2,5}", name):
+        return name
+    off = d.utcoffset()
+    mins = int(off.total_seconds() // 60)
+    sign = "+" if mins >= 0 else "-"
+    return f"UTC{sign}{abs(mins) // 60:02d}:{abs(mins) % 60:02d}"
+
+
+def clock(d):
+    return f"{d.hour % 12 or 12}:{d.minute:02d}"
+
+
+def format_times(start, end):
+    """Daily session time, e.g. '9:00–11:00 AM CDT' or '11:00 AM–1:00 PM CEST'."""
+    if not start or not end:
+        return ""
+    ms, me = ("AM" if start.hour < 12 else "PM"), ("AM" if end.hour < 12 else "PM")
+    first = clock(start) if ms == me else f"{clock(start)} {ms}"
+    return f"{first}–{clock(end)} {me} {zone_label(start)}"
+
+
 def format_price(amount, currency):
     if amount is None:
         return None
@@ -298,6 +388,17 @@ def date_range_html(e):
             + t(end, f"{end:%B} {ordinal(end.day)}, {end.year}"))
 
 
+def time_range_html(e):
+    """format_times() with both ends wrapped in <time datetime>. Empty if Ti.to gave no times."""
+    start, end = local_times(e)
+    text = format_times(start, end)
+    if not text:
+        return ""
+    first, rest = text.split("–", 1)
+    return (f'<time datetime="{start.isoformat(timespec="minutes")}">{html.escape(first)}</time>–'
+            f'<time datetime="{end.isoformat(timespec="minutes")}">{html.escape(rest)}</time>')
+
+
 def place_label(e):
     return "Live online" if is_online(e.get("location")) else e["location"]
 
@@ -316,13 +417,21 @@ def card_html(e, anchor):
         f'    <h2 class="ws-title"><a href="{url}">{esc(e["title"])}</a></h2>',
         '    <div class="ws-band">',
         f'      <p class="ws-when">{date_range_html(e)}</p>',
+    ]
+    times = time_range_html(e)
+    if times:
+        bits.append(f'      <p class="ws-time">{times}</p>')
+    bits += [
         f'      <p class="ws-where">{esc(place_label(e))}</p>',
         '    </div>',
     ]
-    if price:
+    if e.get("sold_out"):
+        bits.append('    <p class="ws-price">Sold out</p>')
+    elif price:
         bits.append(f'    <p class="ws-price">From {esc(price)}</p>')
+    cta = "See details" if e.get("sold_out") else "Register"
     bits += [
-        f'    <a class="ws-cta" href="{url}">Register<span class="sr">: {esc(e["title"])}</span></a>',
+        f'    <a class="ws-cta" href="{url}">{cta}<span class="sr">: {esc(e["title"])}</span></a>',
         '  </div>',
         '</article>',
     ]
@@ -442,13 +551,14 @@ LEDE = ("Our training is available in person or online, live and interactive, de
 
 def event_schema(e, anchor):
     online = is_online(e.get("location"))
+    start_at, end_at = local_times(e)
     ev = {
         "@type": "Event",
         "@id": f"{SITE_URL}/#{anchor}",
         "name": e["title"],
         "url": e["url"],
-        **({"startDate": e["start"]} if e.get("start") else {}),
-        **({"endDate": e["end"]} if e.get("end") else {}),
+        **({"startDate": start_at.isoformat() if start_at else e["start"]} if e.get("start") else {}),
+        **({"endDate": end_at.isoformat() if end_at else e["end"]} if e.get("end") else {}),
         "eventStatus": "https://schema.org/EventScheduled",
         "eventAttendanceMode": "https://schema.org/"
                                + ("OnlineEventAttendanceMode" if online
@@ -462,6 +572,9 @@ def event_schema(e, anchor):
     if e.get("price_from") is not None:
         offer["price"] = f'{e["price_from"]:.2f}'
         offer["priceCurrency"] = (e.get("currency") or "USD").upper()
+    if e.get("sold_out") is not None:
+        offer["availability"] = ("https://schema.org/SoldOut" if e["sold_out"]
+                                 else "https://schema.org/InStock")
     ev["offers"] = offer
     return ev
 
@@ -545,9 +658,15 @@ def render_llms(events, updated):
     if not events:
         lines.append(f"No public workshops are scheduled right now. See {TIMELINE_URL}")
     for e, a in zip(events, assign_anchors(events)):
-        facts = [e.get("date_label") or "Dates to be announced", place_label(e)]
+        facts = [e.get("date_label") or "Dates to be announced"]
+        times = format_times(*local_times(e))
+        if times:
+            facts.append(times)
+        facts.append(place_label(e))
         price = format_price(e.get("price_from"), e.get("currency"))
-        if price:
+        if e.get("sold_out"):
+            facts.append("Sold out")
+        elif price:
             facts.append(f"From {price}")
         lines.append(f"- [{md(e['title'])}]({SITE_URL}/#{a}): {'. '.join(facts)}. "
                      f"Register at {e['url']}")

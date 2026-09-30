@@ -76,6 +76,29 @@ decision actually taken.
 
 ## 4. Ti.to API
 
+**Correction, 2026-09-30. v2 is retired; use v3.** The first live build got
+`HTTP 404` from the v2 URL below. Without credentials, every v2 path (including `/v2/hello`)
+returns a plain 404 page, while `https://api.tito.io/v3/hello` returns
+`{"authenticated":false}` and `/v3/sense-respond-learning/events` returns
+`401 "The API token is missing"`, so the account slug is right. `build.py` now uses v3.
+From the v3 docs (https://ti.to/docs/api/admin/3.0), checked 2026-09-30:
+
+- **Events:** `GET https://api.tito.io/v3/{account}/events` lists upcoming events. Headers:
+  `Authorization: Token token=...` and `Accept: application/json`. Plain JSON, not JSON:API:
+  `{"events": [...], "meta": {"next_page": ...}}`. Paged with `page[number]` and
+  `page[size]` (max 1000)
+- **Event fields:** `title`, `slug`, `start_date`, `end_date`, `start_at`, `end_at`,
+  `timezone`, `location`, `currency`, `live`, `private`, `test_mode`, `banner_url`
+- **Releases:** `GET https://api.tito.io/v3/{account}/{event_slug}/releases`. Fields
+  include `price`, `archived`, `secret`, `not_a_ticket`, `sold_out`, `state_name`. The docs
+  don't say whether the events list embeds priced releases, so `build.py` makes one call
+  per event
+- **Tokens:** generated at https://id.tito.io, "Generate New Token". Only **secret** tokens
+  work with the Admin API. **Not yet verified** that the token in the repo secret is a v3
+  secret token. The first v3 run will tell: a 401 means it needs replacing
+
+The v2 notes below are kept as a record.
+
 **Endpoint:** `GET https://api.tito.io/v2/{account}/events?include=releases`
 **Auth header:** `Authorization: Token token=YOUR-API-KEY`
 **Account slug:** `sense-respond-learning`

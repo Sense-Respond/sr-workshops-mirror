@@ -21,8 +21,8 @@ This half is tested and correct. Don't rewrite it.
 
 | Function | What it does |
 |---|---|
-| `fetch_from_api()` | Reads the Ti.to API, filters out private, test-mode, not-live and finished events |
-| `cheapest_price()` | Lowest price across releases a member of the public can actually buy. Ignores archived, secret and not-a-ticket releases |
+| `fetch_from_api()` | Reads the Ti.to **v3** API (v2 retired, moved 2026-09-30), filters out private, test-mode, not-live and finished events, one releases call per event. Also returns `start_at`, `end_at`, `timezone` and `sold_out` |
+| `cheapest_price()` | Lowest price across releases a member of the public can actually buy. Ignores archived, secret and not-a-ticket releases. Field names updated for v3 (`not_a_ticket`) |
 | `fetch_from_timeline()` | Scrapes the public timeline when no token is set. Correctly excludes past and unscheduled events. **Since late September 2026 the timeline is client-rendered, so this returns nothing.** See `FINDINGS.md` section 5 |
 | `format_range()` | Matches Ti.to's own date phrasing, e.g. "September 17th–October 8th, 2026" (en dash, kept by decision 2026-09-30) |
 | `format_price()`, `ordinal()`, `parse_date()`, `clean()` | Small helpers |
@@ -79,7 +79,7 @@ Options: `--from-json PATH` builds from a saved `workshops.json` (e.g.
 
 ## Tests
 
-All of these are now in `tests/` and pass (41 tests, 2026-09-30). One caveat: the timeline
+All of these are now in `tests/` and pass (54 tests, 2026-09-30; the API tests use v3-shaped fixtures). One caveat: the timeline
 test originally ran against real markup (11 events). That markup no longer exists, so it now
 runs against a synthetic fixture built from the documented class names, plus the real
 30 September empty page.

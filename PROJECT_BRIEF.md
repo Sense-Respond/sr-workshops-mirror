@@ -4,7 +4,8 @@
 
 ## Current State
 
-**2026-09-30. Renderer, Action and Netlify config written. Not yet committed or deployed.**
+**2026-09-30. Renderer, Action and Netlify config pushed (`040fa3d`). API moved to Ti.to v3,
+not yet run live.**
 
 Done:
 - `build.py` render layer replaced. It writes `index.html`, `workshops.json`, `robots.txt`,
@@ -15,7 +16,7 @@ Done:
 - `verify.py` checks what a non-JS crawler sees: titles in the raw HTML against
   `workshops.json`, JSON-LD Events, `<time>` values, and the sibling files. Takes a
   directory or the live URL
-- `tests/`: 41 stdlib `unittest` tests. Run with `python3 -m unittest discover tests`
+- `tests/`: 54 stdlib `unittest` tests. Run with `python3 -m unittest discover tests`
 - `.github/workflows/build.yml`: daily at 11:00 UTC, plus a manual run with an optional
   "force" box. Runs the tests, fails early if `TITO_API_TOKEN` is missing, builds, runs
   `verify.py`, and commits `public/` only if it changed. The `TITO_API_TOKEN` secret is set
@@ -24,10 +25,16 @@ Done:
   touch `public/` or `netlify.toml`. Sets a UTF-8 charset on `llms.txt` and `robots.txt`
 - Brand PDF kept local and gitignored
 
+First live run, 2026-09-30 (run 36785231040): failed with HTTP 404 because Ti.to has retired
+its v2 API. The guards held: the Action failed and nothing was written. `fetch_from_api()` has
+since been moved to v3 (see Decisions).
+
 Open, in order:
-1. Commit and push this work (awaiting Josh's go-ahead)
+1. Commit and push the v3 change
 2. Run the Action once by hand (Actions tab, "Build workshops page", Run workflow). This is
-   the first real API call. It creates `public/`, which Netlify needs before its first deploy
+   the first v3 call. It creates `public/`, which Netlify needs before its first deploy. A
+  401 here means the repo's `TITO_API_TOKEN` isn't a v3 secret token: generate one at
+  https://id.tito.io and replace the secret
 3. Netlify, in the josh@senseandrespond.co account: install the Netlify GitHub App on the
    `Sense-Respond` org, scoped to this repo only; create the site from the repo. Leave the
    build command empty; `netlify.toml` sets the publish directory
@@ -78,6 +85,20 @@ scrapped. See `docs/FINDINGS.md`.
 
 ## Decisions Made
 
+- **2026-09-30. Move `fetch_from_api()` to Ti.to Admin API v3.** v2 is retired (404). Same
+  filter and pricing rules as before; only the endpoint, response shape and field names
+  changed. Prices come from one releases call per event. Overrides the earlier "keep the data
+  layer as-is" instruction for these two functions, by Josh's approval.
+- **2026-09-30. Show sold-out status.** A workshop is sold out when every release the public
+  can buy (not archived, secret or not-a-ticket) is sold out. Sold-out workshops show "Sold
+  out" instead of a price and a "See details" button instead of "Register", and their
+  JSON-LD offer says `SoldOut`. Others say `InStock`. With no public releases, availability
+  is left out. The "from" price still includes sold-out releases, as before.
+- **2026-09-30. Show session times.** From Ti.to's `start_at`, `end_at` and `timezone`,
+  shown in the date band as e.g. "9:00–11:00 AM CDT", between the date and the place (guide
+  p.21: "date, time and place"). JSON-LD `startDate`/`endDate` become full datetimes when
+  times are known. Rails zone names are mapped to IANA zones for the abbreviation; unknown
+  zones or zones without an abbreviation show a UTC offset. No times from Ti.to, no time line.
 - **2026-09-30. Brand guide PDF stays out of git.** It is 20MB and a client-version document.
   It lives in `docs/` locally and is gitignored. Anyone working without it uses
   `docs/BRAND-SPEC.md`, which records what was checked against it.
