@@ -79,7 +79,7 @@ Options: `--from-json PATH` builds from a saved `workshops.json` (e.g.
 
 ## Tests
 
-All of these are now in `tests/` and pass (54 tests, 2026-09-30; the API tests use v3-shaped fixtures). One caveat: the timeline
+All of these are now in `tests/` and pass (64 tests, 2026-10-01; the API tests use v3-shaped fixtures). One caveat: the timeline
 test originally ran against real markup (11 events). That markup no longer exists, so it now
 runs against a synthetic fixture built from the documented class names, plus the real
 30 September empty page.

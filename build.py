@@ -113,8 +113,8 @@ def fetch_from_api():
         by_id = {r.get("id"): r for r in releases}
         price, currency = cheapest_price(list(by_id), by_id, a.get("currency"))
 
-        banner = a.get("banner_url") or ((a.get("banner") or {}).get("url")
-                                         if isinstance(a.get("banner"), dict) else None)
+        banner = banner_url(a.get("banner_url") or ((a.get("banner") or {}).get("url")
+                                         if isinstance(a.get("banner"), dict) else None))
         out.append({
             "title": (a.get("title") or "").strip(),
             "slug": slug,
@@ -179,6 +179,16 @@ REGION_RE = re.compile(r'fa-globe[^>]*>(?:\s*</i>)?\s*([^<\r\n]+)')
 def region_from_description(description):
     m = REGION_RE.search(description or "") if isinstance(description, str) else None
     return (clean(m.group(1)).strip(" *_") or None) if m else None
+
+
+def banner_url(value):
+    # Ti.to v3 returns banner_url with the full URL appended to its own folder, e.g.
+    # ".../banner/1164882/https://.../banner/1164882/x.png", which CloudFront rejects (403).
+    # Keep the last full URL in the string.
+    if not isinstance(value, str) or not value.strip():
+        return None
+    i = value.rfind("https://")
+    return value[i:] if i > 0 else value.strip()
 
 
 def parse_date(value):

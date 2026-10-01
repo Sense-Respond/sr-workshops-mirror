@@ -44,8 +44,12 @@ Design follows the 2025 brand guidelines: Oswald and Roboto at the specified siz
 **1. The brand guide and the live site disagree. (Natalia)**
 The guide shows dark Iron rectangular buttons and lists Deep Teal `#345C60` as a sparing accent. Our live site uses Deep Teal pill buttons everywhere as the main action color. Body copy is 18px in the guide and about 14px on the site. For now we match the live site so the new page doesn't look foreign. The real question is whether we correct the site or update the guide.
 
+*Update, 30 September 2026: decided. The brand guide governs the new page, not the live site. Where the page departs from the guide, the reasons are listed for Natalia under "Brand divergences" in `PROJECT_BRIEF.md`.*
+
 **2. Six of our 21 upcoming ti.to events are exact duplicates. (Josh)**
 Six pairs share a title and dates, with slugs differing only by a trailing -1 and -2, all under the `updated-product-training-for-2027` family. Visitors to our ti.to page see each of these listed twice today. If they are separate cohorts or time zones they need distinct titles. If they are mistakes they should be deleted.
+
+*Update, 30 September 2026: resolved. They are not duplicates. Each pair is one course run twice, once for Americas & Europe and once for Asia-Pacific, Middle East & Africa. The page lists both and shows the region on each.*
 
 **3. What goes on senseandrespond.co/workshops. (Jeff)**
 A subdomain is weaker than our main domain for Google. The fix is a short evergreen page on Squarespace about the workshop catalogue, built once by hand, linking to the live schedule. That copy overlaps the repositioning work, where /courses is already the canonical course page. It should probably be scoped into that project rather than decided separately.
@@ -55,9 +59,9 @@ A subdomain is weaker than our main domain for Google. The fix is a short evergr
 | # | Step | Owner |
 |---|---|---|
 | 1 | Generate a ti.to API token | Josh |
-| 2 | Create the repo, connect it to Netlify, point the `workshops` subdomain | Josh |
+| 2 | Create the repo, connect it to Netlify, point the `workshops` subdomain | Josh (done 1 Oct: live at workshops.senseandrespond.co) |
 | 3 | Confirm the brand approach for the new page | Natalia |
-| 4 | Resolve the six duplicate ti.to events | Josh |
+| 4 | Resolve the six duplicate ti.to events | Josh (done: regional cohorts, 30 Sep) |
 | 5 | Repoint the "Public Workshops" nav item once the page is live | Natalia |
 | 6 | Decide where the evergreen /workshops copy belongs | Jeff |
 

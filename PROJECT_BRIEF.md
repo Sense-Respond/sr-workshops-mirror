@@ -1,13 +1,22 @@
 # Public Workshops Mirror — Project Brief
 
-**Last updated:** 2026-09-30
+**Last updated:** 2026-10-01
 
 ## Current State
 
-**2026-09-30. Pipeline working end to end on Ti.to v3. Netlify and DNS not started.**
+**2026-10-01. Live at https://workshops.senseandrespond.co. Definition of done item 1 met.**
 
-The Action builds `public/` from the live API and commits it. Latest build (`81ba016`):
-14 workshops, 0 collapsed, `verify.py` OK. Nothing is public yet.
+The Action builds `public/` from the live API and commits it; Netlify deploys on push.
+Latest build (`81ba016`): 14 workshops, 0 collapsed. Netlify site `sr-workshops.netlify.app`,
+HTTPS working, HTTP redirects to HTTPS. Only the Squarespace nav link remains.
+
+Live checks, 2026-10-01 12:38 UTC:
+- `python3 verify.py https://workshops.senseandrespond.co`: OK. 14 titles in the raw HTML
+  match `workshops.json`, 14 JSON-LD `Event`s, 27 `<time>` elements
+- Fetched with the GPTBot user agent: full list in the raw HTML
+- `robots.txt`, `sitemap.xml`, `llms.txt`, `workshops.json` all 200, text files served as
+  UTF-8
+- Live `index.html` is byte-identical to `public/index.html` at `81ba016`
 
 Done:
 - `build.py` writes `index.html`, `workshops.json`, `robots.txt`, `sitemap.xml` and
@@ -19,7 +28,7 @@ Done:
   ignores sold-out tickets
 - `main()` guards per the decisions below. `--from-json` and `--force`
 - `verify.py` checks what a non-JS crawler sees. Takes a directory or the live URL
-- `tests/`: 62 stdlib `unittest` tests. Run with `python3 -m unittest discover tests`
+- `tests/`: 64 stdlib `unittest` tests. Run with `python3 -m unittest discover tests`
 - `.github/workflows/build.yml`: daily at 11:00 UTC, plus a manual run with an optional
   "force" box. Tests, token check, build, verify, commit `public/` only if it changed
 - `netlify.toml`: publishes `public/`, no build command, skips deploys that don't touch
@@ -32,13 +41,25 @@ Live runs, 2026-09-30:
   regional cohorts as duplicates, and listed in-progress workshops
 - 36787011791: all three fixed. 14 workshops, 10 regional cohorts detected
 
+Live runs, 2026-10-01:
+- 36863257348 (manual, no force): tests, token check, build, verify all passed. API returned
+  14 events, unchanged since the 2026-09-30 22:41 UTC build, so the no-change guard wrote
+  nothing and there was no commit or deploy. Netlify's deploy-on-push from an Action
+  commit is still untested; the next real data change will test it
+- 36863477460 (manual, force, Josh): committed `c09a93c` (timestamps only). Josh saw
+  missing images on the live page. Cause: Ti.to v3's `banner_url` is the CloudFront URL with
+  the full URL appended again (`.../banner/1164882/https://.../banner/1164882/x.png`), which
+  CloudFront answers 403. Broken since the first v3 build on 2026-09-30, not caused by the
+  force run. Fixed in `build.py` (`banner_url()`), see Decisions
+
 Open, in order:
-1. Netlify, in the josh@senseandrespond.co account: install the Netlify GitHub App on the
-   `Sense-Respond` org, scoped to this repo only; create the site from the repo. Leave the
-   build command empty; `netlify.toml` sets the publish directory
-2. DNS: add `workshops.senseandrespond.co` in Netlify and create the CNAME wherever the
-   senseandrespond.co DNS is managed. Wait for HTTPS
-3. `python3 verify.py https://workshops.senseandrespond.co`. Definition of done item 1
+1. ~~Netlify~~ Done 2026-10-01 (Josh): Netlify GitHub App installed on the `Sense-Respond`
+   org, scoped to this repo; site created from the repo in the josh@senseandrespond.co
+   account, build command empty
+2. ~~DNS~~ Done 2026-10-01: `workshops.senseandrespond.co` CNAME to
+   `sr-workshops.netlify.app`, created at iwantmyname (where the senseandrespond.co
+   nameservers are). Netlify verified it and issued the HTTPS certificate
+3. ~~Verify live~~ Done 2026-10-01: `verify.py` OK against the live URL (see above)
 4. Repoint the "Public Workshops" nav item on Squarespace (Natalia)
 
 Also open:
@@ -48,7 +69,8 @@ Also open:
 - The ten regional cohorts carry Ti.to's default time zone, UTC, so they show a region but
   no time zone. Their real session times (e.g. 11:00 ET / 12:00 BRT / 17:00 CET) are only
   in the Ti.to description text
-- `docs/TEAM-BRIEF.md` item 2 still calls the regional cohorts duplicates
+- First scheduled run (2026-10-01 11:00 UTC) had not started by 12:40 UTC. GitHub delays
+  scheduled runs, sometimes by hours. Check it ran later today; if not, check the Actions tab
 - GitHub disables scheduled workflows after 60 days with no repo activity. The Action's own
   commits count, and the list changes at least as often as a workshop starts, so this should
   not bite. If the Action ever stops running, re-enable it on the Actions tab
@@ -88,6 +110,10 @@ scrapped. See `docs/FINDINGS.md`.
 
 ## Decisions Made
 
+- **2026-10-01. Repair Ti.to's doubled banner URLs.** `banner_url()` keeps the last
+  `https://` URL in the string. All 14 repaired URLs return 200. A normal URL passes
+  through unchanged, so if Ti.to fixes this the code needs no change. A small addition to
+  `fetch_from_api()`, which is otherwise kept as-is.
 - **2026-09-30. The "duplicates" are regional cohorts; show both.** Each
   `updated-product-training-for-2027-*-1`/`-2` pair is one course run for Americas & Europe
   and again for Asia-Pacific, Middle East & Africa, on the same dates (`docs/FINDINGS.md`

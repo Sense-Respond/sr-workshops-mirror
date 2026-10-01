@@ -186,6 +186,18 @@ class Regions(unittest.TestCase):
             self.assertIsNone(r(nothing))
 
 
+class Banners(unittest.TestCase):
+    def test_doubled_v3_url(self):
+        good = "https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1164882/264e.png"
+        doubled = "https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1164882/" + good
+        self.assertEqual(build.banner_url(doubled), good)
+
+    def test_normal_and_missing(self):
+        self.assertEqual(build.banner_url("https://example.com/b.png"), "https://example.com/b.png")
+        self.assertIsNone(build.banner_url(None))
+        self.assertIsNone(build.banner_url(""))
+
+
 class SoldOut(unittest.TestCase):
     def test_rules(self):
         self.assertIsNone(build.sold_out([]))
