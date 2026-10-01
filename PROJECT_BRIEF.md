@@ -4,32 +4,35 @@
 
 ## Current State
 
-**2026-10-01. Live at https://workshops.senseandrespond.co. Definition of done item 1 met.**
+**2026-10-01. Live at https://workshops.senseandrespond.co with the design from the
+2026-10-01 review. Waiting on Natalia's review, then the nav link.**
 
 The Action builds `public/` from the live API and commits it; Netlify deploys on push.
-Latest build (`664e2fb`): 14 workshops, 0 collapsed. Netlify site `sr-workshops.netlify.app`,
-HTTPS working, HTTP redirects to HTTPS.
+Latest build (`491763c`, template version 5): 14 workshops, 0 collapsed. Netlify site
+`sr-workshops.netlify.app`, HTTPS working, HTTP redirects to HTTPS. The design pass
+(`098875e`) was previewed locally at 1440 and 390px wide and approved by Josh before push.
 
-**Design pass from the 2026-10-01 review with Natalia: built locally, not yet pushed.**
-Template version 5. See the 2026-10-01 decisions. Once pushed and deployed, Natalia reviews,
-then repoints the nav.
-
-Live checks, 2026-10-01 12:38 UTC:
+Live checks, 2026-10-01 18:05 UTC, after the design pass:
 - `python3 verify.py https://workshops.senseandrespond.co`: OK. 14 titles in the raw HTML
   match `workshops.json`, 14 JSON-LD `Event`s, 27 `<time>` elements
-- Fetched with the GPTBot user agent: full list in the raw HTML
-- `robots.txt`, `sitemap.xml`, `llms.txt`, `workshops.json` all 200, text files served as
-  UTF-8
-- Live `index.html` is byte-identical to `public/index.html` at `664e2fb`
+- Fetched with the GPTBot user agent: all 14 workshop titles in the raw HTML
+- Live `index.html` is byte-identical to `public/index.html` at `491763c`. No gradient band;
+  back link "← Back to senseandrespond.co" to /individuals
+- `assets/sr-logo.svg`, `assets/sr-logomark.svg`, `assets/hero-gradient.jpg` all 200 with the
+  right content types. All 14 banners 200 (checked 12:47 UTC)
+- Earlier, 12:38 UTC: `robots.txt`, `sitemap.xml`, `llms.txt`, `workshops.json` all 200,
+  text files served as UTF-8
 
 Done:
 - `build.py` writes `index.html`, `workshops.json`, `robots.txt`, `sitemap.xml` and
   `llms.txt`. Every workshop is in the raw HTML with an `<h2>`, an anchor id from its slug,
   `<time datetime>` on every date, and one full JSON-LD `Event`. The only `<script>` on the
   page is the JSON-LD
-- Data from the Ti.to Admin API v3 (v2 is retired). The date band shows date, then session
-  times or time zone, then region, then place. Sold-out status and a "from" price that
-  ignores sold-out tickets
+- Data from the Ti.to Admin API v3 (v2 is retired). Each card shows the Ti.to banner, the
+  title, then date, session times or time zone, region and place in Slate. Sold-out status
+  and a "from" price that ignores sold-out tickets
+- Design from the live site (2026-10-01): top bar with logo and back link, gradient hero,
+  Deep Teal pill buttons, one workshop per row. Assets committed in `public/assets/`
 - `main()` guards per the decisions below. `--from-json` and `--force`
 - `verify.py` checks what a non-JS crawler sees. Takes a directory or the live URL
 - `tests/`: 65 stdlib `unittest` tests. Run with `python3 -m unittest discover tests`
@@ -58,6 +61,12 @@ Live runs, 2026-10-01:
   a data change, so it wrote and committed `664e2fb`. Netlify deployed it within about 10
   seconds of the push, so deploy-on-push from an Action commit now works. Live: all 14
   images return 200, `verify.py` OK
+- Scheduled run, 17:16 UTC: the first unattended run, about six hours after its 11:00 UTC
+  slot. Passed; no change in the data, so nothing written. GitHub's schedule delays are
+  normal, so a late run isn't a failure
+- 36903987959 (manual, no force): after the design pass (`098875e`). TEMPLATE_VERSION 5
+  counted as a change, so it wrote and committed `491763c`; Netlify deployed it. Live checks
+  above
 
 Open, in order:
 1. ~~Netlify~~ Done 2026-10-01 (Josh): Netlify GitHub App installed on the `Sense-Respond`
@@ -67,7 +76,9 @@ Open, in order:
    `sr-workshops.netlify.app`, created at iwantmyname (where the senseandrespond.co
    nameservers are). Netlify verified it and issued the HTTPS certificate
 3. ~~Verify live~~ Done 2026-10-01: `verify.py` OK against the live URL (see above)
-4. Repoint the "Public Workshops" nav item on Squarespace (Natalia)
+4. Natalia reviews the 2026-10-01 design on the live page
+5. Repoint the "Public Workshops" nav item on Squarespace to
+   https://workshops.senseandrespond.co (Natalia, after step 4)
 
 Also open:
 - Typo in the Ti.to banner for the OKR cohorts: "OBJECTVES & KEY RESULTS". It's in the image
@@ -81,17 +92,24 @@ Also open:
 - Ti.to banners are full-size PNGs, about 4,170px wide and 12.6MB for today's 14. They
   lazy-load, so only the ones scrolled to are fetched, but each is about 900KB on a phone.
   Smaller exports from wherever the banners are made would fix it
-- Natalia to review the 2026-10-01 design pass, then repoint the nav
-- No session times are entered in Ti.to for any event. When they are, the band shows them
+- No session times are entered in Ti.to for any event. When they are, the card shows them
   (e.g. "9:00–11:00 AM CDT") instead of the time zone
 - The ten regional cohorts carry Ti.to's default time zone, UTC, so they show a region but
   no time zone. Their real session times (e.g. 11:00 ET / 12:00 BRT / 17:00 CET) are only
   in the Ti.to description text
-- First scheduled run (2026-10-01 11:00 UTC) had not started by 12:40 UTC. GitHub delays
-  scheduled runs, sometimes by hours. Check it ran later today; if not, check the Actions tab
 - GitHub disables scheduled workflows after 60 days with no repo activity. The Action's own
   commits count, and the list changes at least as often as a workshop starts, so this should
   not bite. If the Action ever stops running, re-enable it on the Actions tab
+
+- `docs/TEAM-BRIEF.md` is a copy of `../../Web Site/Workshop ticketing mirror page/
+  workshops-page-brief.md` as of 2026-10-01 (Josh's instruction). Edit the source and copy
+  it again, rather than editing this copy. Both still list the design pass as "In progress"
+
+Found on 2026-10-01:
+- The live site's body text is 1.1rem, 19.7px at desktop width, not "about 14px" as noted
+  in September. Measured values are in `docs/BRAND-SPEC.md`
+- Ti.to v3 returns doubled `banner_url`s (fixed in `build.py`)
+- Scheduled runs can start hours late (the first ran at 17:16 UTC for an 11:00 slot)
 
 Found on 2026-09-30:
 - The ti.to public timeline no longer server-renders its events (`docs/FINDINGS.md`
@@ -184,7 +202,7 @@ Earlier:
   `updated-product-training-for-2027-*-1`/`-2` pair is one course run for Americas & Europe
   and again for Asia-Pacific, Middle East & Africa, on the same dates (`docs/FINDINGS.md`
   section 6). The region comes from the globe-icon line in the Ti.to description. It is shown
-  in the date band, JSON-LD and `llms.txt`, and is part of the dedupe key. Narrows the
+  on the card (the date band until 2026-10-01), JSON-LD and `llms.txt`, and is part of the dedupe key. Narrows the
   2026-09-18 "collapse duplicate events" decision: only events identical in region too are
   collapsed.
 - **2026-09-30. Don't list in-progress workshops.** An event is listed only if its start date
@@ -210,7 +228,7 @@ Earlier:
   JSON-LD offer says `SoldOut`. Others say `InStock`. With no public releases, availability
   is left out. The "from" price still includes sold-out releases, as before.
 - **2026-09-30. Show session times.** From Ti.to's `start_at`, `end_at` and `timezone`,
-  shown in the date band as e.g. "9:00–11:00 AM CDT", between the date and the place (guide
+  shown on the card (in the date band until 2026-10-01) as e.g. "9:00–11:00 AM CDT", between the date and the place (guide
   p.21: "date, time and place"). JSON-LD `startDate`/`endDate` become full datetimes when
   times are known. Rails zone names are mapped to IANA zones for the abbreviation; unknown
   zones or zones without an abbreviation show a UTC offset. No times from Ti.to, no time line.

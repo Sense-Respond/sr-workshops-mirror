@@ -4,11 +4,13 @@
 
 | File | Status |
 |---|---|
-| `build.py` | Data layer kept as-is. Render layer and `main()` rewritten 2026-09-30 |
+| `build.py` | Data layer kept as-is (plus `banner_url()`, 2026-10-01). Render layer and `main()` rewritten 2026-09-30; render layer redesigned from the live site 2026-10-01 (template version 5) |
 | `verify.py` | Checks the raw HTML the way a non-JS crawler sees it. `python3 verify.py [dir or URL]` |
 | `tests/` | stdlib `unittest`. `python3 -m unittest discover tests` |
 | `.github/workflows/build.yml` | Daily build at 11:00 UTC: test, build, verify, commit `public/` if changed |
 | `netlify.toml` | Publish `public/`, no build command, skip deploys that don't touch `public/` |
+| `public/assets/` | Logo, logomark (favicon) and hero image from Natalia. Committed by hand, not generated. `build.py` writes next to them and never deletes them. When building elsewhere with `OUT_DIR`, copy this folder in to see the images |
+| `docs/reference/` | Screenshots of the live site and ti.to that set the overall look (2026-10-01 review). Exact values are in `docs/BRAND-SPEC.md` |
 | `docs/sample-workshops.json` | Real snapshot of 15 workshops, 18 September 2026. Use it to develop and test the renderer without hitting the API |
 | `docs/DEPRECATED-squarespace-code-block.html` | Do not ship. Kept as a record of the wrong approach. See `docs/FINDINGS.md`, dead end 1 |
 
@@ -41,6 +43,9 @@ page mean the list changed then, rather than a job ran then.
 
 ## build.py: rewrite these (done 2026-09-30)
 
+A record of the first rewrite. The 2026-10-01 design pass replaced the gradient date band and
+the styles again; see `PROJECT_BRIEF.md`, Decisions.
+
 The render layer was written for the abandoned Squarespace approach. It produces a card grid
 that does not meet the brand spec or the crawlability criteria.
 
@@ -51,7 +56,7 @@ that does not meet the brand spec or the crawlability criteria.
 | `PAGE` | No logo, no `robots`/`sitemap`/`llms` siblings, thin JSON-LD |
 | `render_page()` | JSON-LD omits price and only handles `ItemList`. Needs full `Event` objects |
 
-## build.py: add these (done 2026-09-30, logo still a placeholder)
+## build.py: add these (done 2026-09-30; real logo added 2026-10-01)
 
 - `robots.txt` emitter, explicitly allowing GPTBot, ClaudeBot, PerplexityBot,
   Google-Extended, CCBot
