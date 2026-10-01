@@ -171,7 +171,7 @@ scrapped. See `docs/FINDINGS.md`.
 
 Analytics, 2026-10-01 (Josh):
 
-- **2026-10-01. Measure registrations interest with GA outbound clicks, not Ti.to sources.**
+- **2026-10-01. Measure click-throughs to Ti.to with GA outbound clicks, not Ti.to sources.**
   Saving a Ti.to source on every event is not practical: the admin creates events and can't
   be asked to do it each time, and the Ti.to Admin API has no endpoint to create sources.
   GA4's enhanced measurement already records each click to ti.to as a `click` event with
