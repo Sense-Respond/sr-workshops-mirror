@@ -83,6 +83,22 @@ mark{background:var(--lime);color:inherit;padding:0 .1em;
   clip-path:inset(50%);white-space:nowrap;}
 .empty{background:var(--white);border-radius:16px;padding:28px 36px;margin:0;}
 
+/* Cookie consent: the live site's banner. Fixed bar, Chalk, small text, a text-link button
+   and a pill button. Hidden until the script shows it, so it never appears without JS. */
+.consent{position:fixed;left:0;right:0;bottom:0;z-index:1000;background:var(--chalk);
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 20px;
+  padding:14px 20px;box-shadow:0 -1px 0 rgba(0,0,0,.06);}
+.consent[hidden]{display:none;}
+.consent p{margin:0;flex:1 1 32em;font-size:clamp(13.84px,13.6px + .07vw,14.54px);line-height:1.6;}
+.consent-actions{display:flex;gap:14px;align-items:center;}
+.consent button{font:600 12px/normal var(--body);padding:11px 15px;border:0;cursor:pointer;}
+.consent .decline{background:none;color:#038A98;}
+.consent .decline:hover{background:var(--teal);color:var(--white);}
+.consent .accept{background:var(--teal);color:var(--white);border-radius:300px;
+  text-transform:capitalize;transition:opacity .1s linear;}
+.consent .accept:hover{opacity:.8;}
+.consent button:focus-visible{outline:3px solid var(--iron);outline-offset:3px;}
+
 .site-foot{color:var(--slate);font-size:clamp(14.92px,14.4px + .13vw,16.27px);padding:40px 0 56px;}
 .site-foot p{margin:0 0 8px;}
 
@@ -490,6 +506,35 @@ mark{background:var(--lime);color:inherit;padding:0 .1em;
   }
  ]
 }</script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+(function () {
+  var KEY = "sr-consent", choice = null;
+  try { choice = localStorage.getItem(KEY); } catch (e) {}
+  function consent(v) {
+    return {ad_storage: v, ad_user_data: v, ad_personalization: v, analytics_storage: v};
+  }
+  gtag("consent", "default", consent(choice === "granted" ? "granted" : "denied"));
+  gtag("js", new Date());
+  gtag("config", "G-WPJMQ52FEF");
+  if (choice === "granted" || choice === "denied") return;
+  document.addEventListener("DOMContentLoaded", function () {
+    var banner = document.getElementById("consent");
+    if (!banner) return;
+    banner.hidden = false;
+    banner.addEventListener("click", function (ev) {
+      var v = ev.target.closest("[data-consent]");
+      if (!v) return;
+      v = v.getAttribute("data-consent");
+      try { localStorage.setItem(KEY, v); } catch (e) {}
+      gtag("consent", "update", consent(v));
+      banner.hidden = true;
+    });
+  });
+})();
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-WPJMQ52FEF"></script>
 </head>
 <body>
 <header class="top">
@@ -512,9 +557,9 @@ mark{background:var(--lime);color:inherit;padding:0 .1em;
   <div class="wrap">
     <div class="col ws-list">
 <article class="ws" id="updated-product-training-for-2027-okrs-1">
-  <a class="ws-banner" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-okrs-1" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1164882/264e92b2d111c7cd76d3a60fc4142e08.png" alt="" loading="lazy" decoding="async"></a>
+  <a class="ws-banner" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-okrs-1?source=workshops-page" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1164882/264e92b2d111c7cd76d3a60fc4142e08.png" alt="" loading="lazy" decoding="async"></a>
   <div class="ws-body">
-    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-okrs-1">Objectives and Key Results</a></h2>
+    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-okrs-1?source=workshops-page">Objectives and Key Results</a></h2>
     <div class="ws-facts">
       <p class="ws-when"><time datetime="2026-10-06">October 6th</time>–<time datetime="2026-10-08">8th, 2026</time></p>
       <p class="ws-region">Americas &amp; Europe</p>
@@ -522,14 +567,14 @@ mark{background:var(--lime);color:inherit;padding:0 .1em;
     </div>
     <div class="ws-action">
       <p class="ws-price">From $500</p>
-      <a class="btn" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-okrs-1">Register<span class="sr">: Objectives and Key Results</span></a>
+      <a class="btn" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-okrs-1?source=workshops-page">Register<span class="sr">: Objectives and Key Results</span></a>
     </div>
   </div>
 </article>
 <article class="ws" id="updated-product-training-for-2027-okrs-2">
-  <a class="ws-banner" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-okrs-2" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1164896/6d90c51e7bff2629e137ebca71271e06.png" alt="" loading="lazy" decoding="async"></a>
+  <a class="ws-banner" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-okrs-2?source=workshops-page" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1164896/6d90c51e7bff2629e137ebca71271e06.png" alt="" loading="lazy" decoding="async"></a>
   <div class="ws-body">
-    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-okrs-2">Objectives and Key Results</a></h2>
+    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-okrs-2?source=workshops-page">Objectives and Key Results</a></h2>
     <div class="ws-facts">
       <p class="ws-when"><time datetime="2026-10-06">October 6th</time>–<time datetime="2026-10-08">8th, 2026</time></p>
       <p class="ws-region">Asia-Pacific, Middle East &amp; Africa</p>
@@ -537,14 +582,14 @@ mark{background:var(--lime);color:inherit;padding:0 .1em;
     </div>
     <div class="ws-action">
       <p class="ws-price">From $500</p>
-      <a class="btn" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-okrs-2">Register<span class="sr">: Objectives and Key Results</span></a>
+      <a class="btn" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-okrs-2?source=workshops-page">Register<span class="sr">: Objectives and Key Results</span></a>
     </div>
   </div>
 </article>
 <article class="ws" id="okrs-daksh-jaya-october-2026">
-  <a class="ws-banner" href="https://ti.to/sense-respond-learning/okrs-daksh-jaya-october-2026" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1165135/cc46d8c9919bf8eb7043f3acd6ee87d2.png" alt="" loading="lazy" decoding="async"></a>
+  <a class="ws-banner" href="https://ti.to/sense-respond-learning/okrs-daksh-jaya-october-2026?source=workshops-page" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1165135/cc46d8c9919bf8eb7043f3acd6ee87d2.png" alt="" loading="lazy" decoding="async"></a>
   <div class="ws-body">
-    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/okrs-daksh-jaya-october-2026">Objectives &amp; Key Results - Live Online Workshop with Daksh Gupta and Jaya Shrivastava</a></h2>
+    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/okrs-daksh-jaya-october-2026?source=workshops-page">Objectives &amp; Key Results - Live Online Workshop with Daksh Gupta and Jaya Shrivastava</a></h2>
     <div class="ws-facts">
       <p class="ws-when"><time datetime="2026-10-10">October 10th</time>–<time datetime="2026-10-11">11th, 2026</time></p>
       <p class="ws-time">Time zone: IST (New Delhi)</p>
@@ -552,14 +597,14 @@ mark{background:var(--lime);color:inherit;padding:0 .1em;
     </div>
     <div class="ws-action">
       <p class="ws-price">From ₹1,400</p>
-      <a class="btn" href="https://ti.to/sense-respond-learning/okrs-daksh-jaya-october-2026">Register<span class="sr">: Objectives &amp; Key Results - Live Online Workshop with Daksh Gupta and Jaya Shrivastava</span></a>
+      <a class="btn" href="https://ti.to/sense-respond-learning/okrs-daksh-jaya-october-2026?source=workshops-page">Register<span class="sr">: Objectives &amp; Key Results - Live Online Workshop with Daksh Gupta and Jaya Shrivastava</span></a>
     </div>
   </div>
 </article>
 <article class="ws" id="updated-product-training-for-2027-lpm-1">
-  <a class="ws-banner" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpm-1" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1164889/4ed7bb77c587274cd1ed77c3c6e68049.png" alt="" loading="lazy" decoding="async"></a>
+  <a class="ws-banner" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpm-1?source=workshops-page" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1164889/4ed7bb77c587274cd1ed77c3c6e68049.png" alt="" loading="lazy" decoding="async"></a>
   <div class="ws-body">
-    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpm-1">Lean Product Management</a></h2>
+    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpm-1?source=workshops-page">Lean Product Management</a></h2>
     <div class="ws-facts">
       <p class="ws-when"><time datetime="2026-10-13">October 13th</time>–<time datetime="2026-10-27">27th, 2026</time></p>
       <p class="ws-region">Americas &amp; Europe</p>
@@ -567,14 +612,14 @@ mark{background:var(--lime);color:inherit;padding:0 .1em;
     </div>
     <div class="ws-action">
       <p class="ws-price">From $500</p>
-      <a class="btn" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpm-1">Register<span class="sr">: Lean Product Management</span></a>
+      <a class="btn" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpm-1?source=workshops-page">Register<span class="sr">: Lean Product Management</span></a>
     </div>
   </div>
 </article>
 <article class="ws" id="updated-product-training-for-2027-lpm-2">
-  <a class="ws-banner" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpm-2" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1164897/98d87058dd667df6c06790eea4b54b6b.png" alt="" loading="lazy" decoding="async"></a>
+  <a class="ws-banner" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpm-2?source=workshops-page" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1164897/98d87058dd667df6c06790eea4b54b6b.png" alt="" loading="lazy" decoding="async"></a>
   <div class="ws-body">
-    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpm-2">Lean Product Management</a></h2>
+    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpm-2?source=workshops-page">Lean Product Management</a></h2>
     <div class="ws-facts">
       <p class="ws-when"><time datetime="2026-10-13">October 13th</time>–<time datetime="2026-10-27">27th, 2026</time></p>
       <p class="ws-region">Asia-Pacific, Middle East &amp; Africa</p>
@@ -582,14 +627,14 @@ mark{background:var(--lime);color:inherit;padding:0 .1em;
     </div>
     <div class="ws-action">
       <p class="ws-price">From $500</p>
-      <a class="btn" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpm-2">Register<span class="sr">: Lean Product Management</span></a>
+      <a class="btn" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpm-2?source=workshops-page">Register<span class="sr">: Lean Product Management</span></a>
     </div>
   </div>
 </article>
 <article class="ws" id="okrs-rich-visotcky-october-19-2026">
-  <a class="ws-banner" href="https://ti.to/sense-respond-learning/okrs-rich-visotcky-october-19-2026" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1163275/e52be33bf292ff2f5e4b4905197aaa7c.png" alt="" loading="lazy" decoding="async"></a>
+  <a class="ws-banner" href="https://ti.to/sense-respond-learning/okrs-rich-visotcky-october-19-2026?source=workshops-page" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1163275/e52be33bf292ff2f5e4b4905197aaa7c.png" alt="" loading="lazy" decoding="async"></a>
   <div class="ws-body">
-    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/okrs-rich-visotcky-october-19-2026">Objectives &amp; Key Results - Who Does What by How Much? - Live Online Workshop with Rich Visotcky</a></h2>
+    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/okrs-rich-visotcky-october-19-2026?source=workshops-page">Objectives &amp; Key Results - Who Does What by How Much? - Live Online Workshop with Rich Visotcky</a></h2>
     <div class="ws-facts">
       <p class="ws-when"><time datetime="2026-10-19">October 19th, 2026</time></p>
       <p class="ws-time">Time zone: CDT (Central Time, US &amp; Canada)</p>
@@ -597,14 +642,14 @@ mark{background:var(--lime);color:inherit;padding:0 .1em;
     </div>
     <div class="ws-action">
       <p class="ws-price">From $695</p>
-      <a class="btn" href="https://ti.to/sense-respond-learning/okrs-rich-visotcky-october-19-2026">Register<span class="sr">: Objectives &amp; Key Results - Who Does What by How Much? - Live Online Workshop with Rich Visotcky</span></a>
+      <a class="btn" href="https://ti.to/sense-respond-learning/okrs-rich-visotcky-october-19-2026?source=workshops-page">Register<span class="sr">: Objectives &amp; Key Results - Who Does What by How Much? - Live Online Workshop with Rich Visotcky</span></a>
     </div>
   </div>
 </article>
 <article class="ws" id="lpd-federico-zuppa-octubre-2026">
-  <a class="ws-banner" href="https://ti.to/sense-respond-learning/lpd-federico-zuppa-octubre-2026" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1165131/beeb378c2a34982071f3ee6d14ded233.png" alt="" loading="lazy" decoding="async"></a>
+  <a class="ws-banner" href="https://ti.to/sense-respond-learning/lpd-federico-zuppa-octubre-2026?source=workshops-page" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1165131/beeb378c2a34982071f3ee6d14ded233.png" alt="" loading="lazy" decoding="async"></a>
   <div class="ws-body">
-    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/lpd-federico-zuppa-octubre-2026">Lean Product Discovery para Equipos Ágiles - Taller en Línea en Vivo con Federico Zuppa</a></h2>
+    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/lpd-federico-zuppa-octubre-2026?source=workshops-page">Lean Product Discovery para Equipos Ágiles - Taller en Línea en Vivo con Federico Zuppa</a></h2>
     <div class="ws-facts">
       <p class="ws-when"><time datetime="2026-10-28">October 28th</time>–<time datetime="2026-11-18">November 18th, 2026</time></p>
       <p class="ws-time">Time zone: UTC-03:00 (Buenos Aires)</p>
@@ -612,14 +657,14 @@ mark{background:var(--lime);color:inherit;padding:0 .1em;
     </div>
     <div class="ws-action">
       <p class="ws-price">From $350</p>
-      <a class="btn" href="https://ti.to/sense-respond-learning/lpd-federico-zuppa-octubre-2026">Register<span class="sr">: Lean Product Discovery para Equipos Ágiles - Taller en Línea en Vivo con Federico Zuppa</span></a>
+      <a class="btn" href="https://ti.to/sense-respond-learning/lpd-federico-zuppa-octubre-2026?source=workshops-page">Register<span class="sr">: Lean Product Discovery para Equipos Ágiles - Taller en Línea en Vivo con Federico Zuppa</span></a>
     </div>
   </div>
 </article>
 <article class="ws" id="updated-product-training-for-2027-lpd-1">
-  <a class="ws-banner" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpd-1" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1164890/be7ec250af8b9718286633fd9db50e8e.png" alt="" loading="lazy" decoding="async"></a>
+  <a class="ws-banner" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpd-1?source=workshops-page" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1164890/be7ec250af8b9718286633fd9db50e8e.png" alt="" loading="lazy" decoding="async"></a>
   <div class="ws-body">
-    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpd-1">Lean Product Discovery</a></h2>
+    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpd-1?source=workshops-page">Lean Product Discovery</a></h2>
     <div class="ws-facts">
       <p class="ws-when"><time datetime="2026-11-03">November 3rd</time>–<time datetime="2026-11-12">12th, 2026</time></p>
       <p class="ws-region">Americas &amp; Europe</p>
@@ -627,14 +672,14 @@ mark{background:var(--lime);color:inherit;padding:0 .1em;
     </div>
     <div class="ws-action">
       <p class="ws-price">From $500</p>
-      <a class="btn" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpd-1">Register<span class="sr">: Lean Product Discovery</span></a>
+      <a class="btn" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpd-1?source=workshops-page">Register<span class="sr">: Lean Product Discovery</span></a>
     </div>
   </div>
 </article>
 <article class="ws" id="updated-product-training-for-2027-lpd-2">
-  <a class="ws-banner" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpd-2" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1164898/bf87ca180f4d07105e78e93c67aaa5c0.png" alt="" loading="lazy" decoding="async"></a>
+  <a class="ws-banner" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpd-2?source=workshops-page" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1164898/bf87ca180f4d07105e78e93c67aaa5c0.png" alt="" loading="lazy" decoding="async"></a>
   <div class="ws-body">
-    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpd-2">Lean Product Discovery</a></h2>
+    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpd-2?source=workshops-page">Lean Product Discovery</a></h2>
     <div class="ws-facts">
       <p class="ws-when"><time datetime="2026-11-03">November 3rd</time>–<time datetime="2026-11-12">12th, 2026</time></p>
       <p class="ws-region">Asia-Pacific, Middle East &amp; Africa</p>
@@ -642,14 +687,14 @@ mark{background:var(--lime);color:inherit;padding:0 .1em;
     </div>
     <div class="ws-action">
       <p class="ws-price">From $500</p>
-      <a class="btn" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpd-2">Register<span class="sr">: Lean Product Discovery</span></a>
+      <a class="btn" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpd-2?source=workshops-page">Register<span class="sr">: Lean Product Discovery</span></a>
     </div>
   </div>
 </article>
 <article class="ws" id="updated-product-training-for-2027-sty-1">
-  <a class="ws-banner" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-sty-1" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1164892/0908649eb67a07f5a9ea5af60c7becd2.png" alt="" loading="lazy" decoding="async"></a>
+  <a class="ws-banner" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-sty-1?source=workshops-page" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1164892/0908649eb67a07f5a9ea5af60c7becd2.png" alt="" loading="lazy" decoding="async"></a>
   <div class="ws-body">
-    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-sty-1">Storytelling Superpowers for Persuasive Conversations</a></h2>
+    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-sty-1?source=workshops-page">Storytelling Superpowers for Persuasive Conversations</a></h2>
     <div class="ws-facts">
       <p class="ws-when"><time datetime="2026-11-17">November 17th</time>–<time datetime="2026-11-24">24th, 2026</time></p>
       <p class="ws-region">Americas &amp; Europe</p>
@@ -657,14 +702,14 @@ mark{background:var(--lime);color:inherit;padding:0 .1em;
     </div>
     <div class="ws-action">
       <p class="ws-price">From $500</p>
-      <a class="btn" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-sty-1">Register<span class="sr">: Storytelling Superpowers for Persuasive Conversations</span></a>
+      <a class="btn" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-sty-1?source=workshops-page">Register<span class="sr">: Storytelling Superpowers for Persuasive Conversations</span></a>
     </div>
   </div>
 </article>
 <article class="ws" id="updated-product-training-for-2027-sty-2">
-  <a class="ws-banner" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-sty-2" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1164899/98dfc188f033d1049a715a71602e4dd7.png" alt="" loading="lazy" decoding="async"></a>
+  <a class="ws-banner" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-sty-2?source=workshops-page" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1164899/98dfc188f033d1049a715a71602e4dd7.png" alt="" loading="lazy" decoding="async"></a>
   <div class="ws-body">
-    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-sty-2">Storytelling Superpowers for Persuasive Conversations</a></h2>
+    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-sty-2?source=workshops-page">Storytelling Superpowers for Persuasive Conversations</a></h2>
     <div class="ws-facts">
       <p class="ws-when"><time datetime="2026-11-17">November 17th</time>–<time datetime="2026-11-24">24th, 2026</time></p>
       <p class="ws-region">Asia-Pacific, Middle East &amp; Africa</p>
@@ -672,14 +717,14 @@ mark{background:var(--lime);color:inherit;padding:0 .1em;
     </div>
     <div class="ws-action">
       <p class="ws-price">From $500</p>
-      <a class="btn" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-sty-2">Register<span class="sr">: Storytelling Superpowers for Persuasive Conversations</span></a>
+      <a class="btn" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-sty-2?source=workshops-page">Register<span class="sr">: Storytelling Superpowers for Persuasive Conversations</span></a>
     </div>
   </div>
 </article>
 <article class="ws" id="updated-product-training-for-2027-bai-1">
-  <a class="ws-banner" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-bai-1" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1164893/90d7dd6594e78bb687273278ddc00803.png" alt="" loading="lazy" decoding="async"></a>
+  <a class="ws-banner" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-bai-1?source=workshops-page" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1164893/90d7dd6594e78bb687273278ddc00803.png" alt="" loading="lazy" decoding="async"></a>
   <div class="ws-body">
-    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-bai-1">Building AI Products with Lean Product Management</a></h2>
+    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-bai-1?source=workshops-page">Building AI Products with Lean Product Management</a></h2>
     <div class="ws-facts">
       <p class="ws-when"><time datetime="2026-12-01">December 1st</time>–<time datetime="2026-12-03">3rd, 2026</time></p>
       <p class="ws-region">Americas &amp; Europe</p>
@@ -687,14 +732,14 @@ mark{background:var(--lime);color:inherit;padding:0 .1em;
     </div>
     <div class="ws-action">
       <p class="ws-price">From $500</p>
-      <a class="btn" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-bai-1">Register<span class="sr">: Building AI Products with Lean Product Management</span></a>
+      <a class="btn" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-bai-1?source=workshops-page">Register<span class="sr">: Building AI Products with Lean Product Management</span></a>
     </div>
   </div>
 </article>
 <article class="ws" id="updated-product-training-for-2027-bai-2">
-  <a class="ws-banner" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-bai-2" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1164900/cc7c7849af528649cea0f6afd07a0a59.png" alt="" loading="lazy" decoding="async"></a>
+  <a class="ws-banner" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-bai-2?source=workshops-page" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1164900/cc7c7849af528649cea0f6afd07a0a59.png" alt="" loading="lazy" decoding="async"></a>
   <div class="ws-body">
-    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-bai-2">Building AI Products with Lean Product Management</a></h2>
+    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-bai-2?source=workshops-page">Building AI Products with Lean Product Management</a></h2>
     <div class="ws-facts">
       <p class="ws-when"><time datetime="2026-12-01">December 1st</time>–<time datetime="2026-12-03">3rd, 2026</time></p>
       <p class="ws-region">Asia-Pacific, Middle East &amp; Africa</p>
@@ -702,14 +747,14 @@ mark{background:var(--lime);color:inherit;padding:0 .1em;
     </div>
     <div class="ws-action">
       <p class="ws-price">From $500</p>
-      <a class="btn" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-bai-2">Register<span class="sr">: Building AI Products with Lean Product Management</span></a>
+      <a class="btn" href="https://ti.to/sense-respond-learning/updated-product-training-for-2027-bai-2?source=workshops-page">Register<span class="sr">: Building AI Products with Lean Product Management</span></a>
     </div>
   </div>
 </article>
 <article class="ws" id="okrs-simon-flossmann-december-2026">
-  <a class="ws-banner" href="https://ti.to/sense-respond-learning/okrs-simon-flossmann-december-2026" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1158845/ae421736d7a9112230c31bb9340cef9d.jpg" alt="" loading="lazy" decoding="async"></a>
+  <a class="ws-banner" href="https://ti.to/sense-respond-learning/okrs-simon-flossmann-december-2026?source=workshops-page" tabindex="-1" aria-hidden="true"><img src="https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1158845/ae421736d7a9112230c31bb9340cef9d.jpg" alt="" loading="lazy" decoding="async"></a>
   <div class="ws-body">
-    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/okrs-simon-flossmann-december-2026">Objectives &amp; Key Results - Who Does What by How Much? - Live Online Workshop mit Simon Flossmann</a></h2>
+    <h2 class="ws-title"><a href="https://ti.to/sense-respond-learning/okrs-simon-flossmann-december-2026?source=workshops-page">Objectives &amp; Key Results - Who Does What by How Much? - Live Online Workshop mit Simon Flossmann</a></h2>
     <div class="ws-facts">
       <p class="ws-when"><time datetime="2026-12-02">December 2nd, 2026</time></p>
       <p class="ws-time">Time zone: CET (Berlin)</p>
@@ -717,7 +762,7 @@ mark{background:var(--lime);color:inherit;padding:0 .1em;
     </div>
     <div class="ws-action">
       <p class="ws-price">From €800</p>
-      <a class="btn" href="https://ti.to/sense-respond-learning/okrs-simon-flossmann-december-2026">Register<span class="sr">: Objectives &amp; Key Results - Who Does What by How Much? - Live Online Workshop mit Simon Flossmann</span></a>
+      <a class="btn" href="https://ti.to/sense-respond-learning/okrs-simon-flossmann-december-2026?source=workshops-page">Register<span class="sr">: Objectives &amp; Key Results - Who Does What by How Much? - Live Online Workshop mit Simon Flossmann</span></a>
     </div>
   </div>
 </article>
@@ -726,10 +771,17 @@ mark{background:var(--lime);color:inherit;padding:0 .1em;
 </main>
 <footer class="site-foot">
   <div class="wrap">
-    <p>List updated <time datetime="2026-10-01T18:03:52+00:00">01 Oct 2026, 18:03 UTC</time>.
+    <p>List updated <time datetime="2026-10-01T21:26:53+00:00">01 Oct 2026, 21:26 UTC</time>.
        Tickets are sold through <a href="https://ti.to/sense-respond-learning/">Ti.to</a>.</p>
     <p><a href="https://senseandrespond.co">Sense &amp; Respond Learning</a></p>
   </div>
 </footer>
+<section class="consent" id="consent" aria-label="Cookie consent" hidden>
+  <p>Select “Accept all” to agree to our use of cookies and similar technologies for analytics. Select “Decline” to opt out.</p>
+  <div class="consent-actions">
+    <button type="button" class="decline" data-consent="denied">Decline</button>
+    <button type="button" class="accept" data-consent="granted">Accept all</button>
+  </div>
+</section>
 </body>
 </html>
