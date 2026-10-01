@@ -7,7 +7,7 @@
 **2026-10-01. Live at https://workshops.senseandrespond.co. Definition of done item 1 met.**
 
 The Action builds `public/` from the live API and commits it; Netlify deploys on push.
-Latest build (`81ba016`): 14 workshops, 0 collapsed. Netlify site `sr-workshops.netlify.app`,
+Latest build (`664e2fb`): 14 workshops, 0 collapsed. Netlify site `sr-workshops.netlify.app`,
 HTTPS working, HTTP redirects to HTTPS. Only the Squarespace nav link remains.
 
 Live checks, 2026-10-01 12:38 UTC:
@@ -16,7 +16,7 @@ Live checks, 2026-10-01 12:38 UTC:
 - Fetched with the GPTBot user agent: full list in the raw HTML
 - `robots.txt`, `sitemap.xml`, `llms.txt`, `workshops.json` all 200, text files served as
   UTF-8
-- Live `index.html` is byte-identical to `public/index.html` at `81ba016`
+- Live `index.html` is byte-identical to `public/index.html` at `664e2fb`
 
 Done:
 - `build.py` writes `index.html`, `workshops.json`, `robots.txt`, `sitemap.xml` and
@@ -44,13 +44,16 @@ Live runs, 2026-09-30:
 Live runs, 2026-10-01:
 - 36863257348 (manual, no force): tests, token check, build, verify all passed. API returned
   14 events, unchanged since the 2026-09-30 22:41 UTC build, so the no-change guard wrote
-  nothing and there was no commit or deploy. Netlify's deploy-on-push from an Action
-  commit is still untested; the next real data change will test it
+  nothing and there was no commit or deploy
 - 36863477460 (manual, force, Josh): committed `c09a93c` (timestamps only). Josh saw
   missing images on the live page. Cause: Ti.to v3's `banner_url` is the CloudFront URL with
   the full URL appended again (`.../banner/1164882/https://.../banner/1164882/x.png`), which
   CloudFront answers 403. Broken since the first v3 build on 2026-09-30, not caused by the
   force run. Fixed in `build.py` (`banner_url()`), see Decisions
+- 36864063425 (manual, no force): after the fix (`a2b84b3`). Repaired banner URLs counted as
+  a data change, so it wrote and committed `664e2fb`. Netlify deployed it within about 10
+  seconds of the push, so deploy-on-push from an Action commit now works. Live: all 14
+  images return 200, `verify.py` OK
 
 Open, in order:
 1. ~~Netlify~~ Done 2026-10-01 (Josh): Netlify GitHub App installed on the `Sense-Respond`
