@@ -51,7 +51,7 @@ SITE_URL = (os.environ.get("SITE_URL", "").strip()
             or "https://workshops.senseandrespond.co").rstrip("/")
 
 # Bump whenever the rendered output changes, so the no-change guard lets the new design ship.
-TEMPLATE_VERSION = 4
+TEMPLATE_VERSION = 5
 
 TIMELINE_URL = f"https://ti.to/{ACCOUNT}/"
 API_BASE = f"https://api.tito.io/v3/{ACCOUNT}"
@@ -464,14 +464,14 @@ def card_html(e, anchor):
     url = esc(e["url"])
     price = format_price(e.get("price_from"), e.get("currency"))
 
-    bits = [f'<article class="ws{"" if e.get("banner") else " ws--plain"}" id="{esc(anchor)}">']
+    bits = [f'<article class="ws" id="{esc(anchor)}">']
     if e.get("banner"):
         bits.append(f'  <a class="ws-banner" href="{url}" tabindex="-1" aria-hidden="true">'
                     f'<img src="{esc(e["banner"])}" alt="" loading="lazy" decoding="async"></a>')
     bits += [
         '  <div class="ws-body">',
         f'    <h2 class="ws-title"><a href="{url}">{esc(e["title"])}</a></h2>',
-        '    <div class="ws-band">',
+        '    <div class="ws-facts">',
         f'      <p class="ws-when">{date_range_html(e)}</p>',
     ]
     times = time_range_html(e) or html.escape(format_zone(e))
@@ -482,74 +482,100 @@ def card_html(e, anchor):
     bits += [
         f'      <p class="ws-where">{esc(place_label(e))}</p>',
         '    </div>',
+        '    <div class="ws-action">',
     ]
     if e.get("sold_out"):
-        bits.append('    <p class="ws-price">Sold out</p>')
+        bits.append('      <p class="ws-price">Sold out</p>')
     elif price:
-        bits.append(f'    <p class="ws-price">From {esc(price)}</p>')
+        bits.append(f'      <p class="ws-price">From {esc(price)}</p>')
     cta = "See details" if e.get("sold_out") else "Register"
     bits += [
-        f'    <a class="ws-cta" href="{url}">{cta}<span class="sr">: {esc(e["title"])}</span></a>',
+        f'      <a class="btn" href="{url}">{cta}<span class="sr">: {esc(e["title"])}</span></a>',
+        '    </div>',
         '  </div>',
         '</article>',
     ]
     return "\n".join(bits)
 
 
-
+# Values measured from senseandrespond.co's computed styles on 2026-10-01, at 390, 768, 1024
+# and 1440px wide (see docs/BRAND-SPEC.md, "Live site values"). The live site is the design
+# reference (decided 2026-10-01); the brand guide fills in where it is silent. Squarespace
+# scales type with the viewport, so sizes are clamp()s fitted to the measured points.
 STYLES = """
 :root{
-  --chalk:#F9FAF0; --white:#FFFFFF; --iron:#39393D; --slate:#58585A; --teal:#345C60;
-  --line:#E3E6D6;
+  --black:#000000; --white:#FFFFFF; --chalk:#F9FAF0; --slate:#58585A; --iron:#39393D;
+  --teal:#345C60; --lime:#E2F46F;
   --head:'Oswald','Arial Narrow',Impact,sans-serif;
   --body:'Roboto',Helvetica,Arial,sans-serif;
+  --gutter:4vw;
 }
 *{box-sizing:border-box;}
 html{-webkit-text-size-adjust:100%;}
-body{margin:0;background:var(--chalk);color:var(--iron);font:400 18px/1.6 var(--body);}
+body{margin:0;background:var(--white);color:var(--black);
+  font:400 clamp(17px,16.1px + .25vw,19.73px)/1.6 var(--body);letter-spacing:.01em;}
 a{color:var(--teal);}
 a:focus-visible{outline:3px solid var(--iron);outline-offset:3px;}
-.wrap{max-width:1100px;margin:0 auto;padding:0 20px;}
+img{max-width:100%;}
+.wrap{max-width:1400px;margin:0 auto;padding:0 var(--gutter);}
+.col{max-width:960px;margin:0 auto;}
 
-.site-head .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
-  gap:8px 24px;padding-top:24px;padding-bottom:24px;}
-/* LOGO PLACEHOLDER. Replace with the SVG from Natalia. Guide p.8: clear space of 50% of the
-   logo's height on every side, which the padding here reserves. */
-.logo{display:inline-block;padding:11px 0;font:700 22px/1 var(--head);text-transform:uppercase;
-  letter-spacing:.02em;color:var(--iron);text-decoration:none;}
+/* Top bar. Logo 50px tall as on the live site, with the guide's clear space (50% of the
+   logo's height, 25px) on every side. */
+.top{background:var(--white);}
+.top .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
+  gap:0 24px;}
+.logo{display:block;padding:25px 0;line-height:0;}
+.logo img{height:50px;width:auto;}
 
-h1{font:700 clamp(44px,10vw,72px)/1.05 var(--head);text-transform:uppercase;margin:24px 0 16px;}
-.lede-head{font:400 clamp(26px,4.5vw,36px)/1.2 var(--head);margin:0 0 12px;}
-.lede{max-width:40em;margin:0 0 40px;}
+/* Hero: Natalia's white-to-gradient background behind the H1 and intro. */
+.hero{background:var(--white) url("assets/hero-gradient.jpg") center bottom/cover no-repeat;
+  padding:clamp(32px,5vw,72px) 0 clamp(56px,8vw,120px);}
+h1{font:400 clamp(48px,18px + 4.2vw,78.48px)/1.032 var(--head);letter-spacing:-.02em;
+  margin:0 0 clamp(32px,4vw,56px);}
+.eyebrow{font-weight:700;color:var(--slate);margin:0 0 4px;}
+.lede-head{font:400 clamp(38px,17.9px + 3vw,61.2px)/1.08 var(--head);letter-spacing:-.02em;
+  margin:0 0 16px;}
+.lede{max-width:40em;margin:0;}
+mark{background:var(--lime);color:inherit;padding:0 .1em;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;}
 
-.ws-list{display:grid;gap:28px;}
-.ws{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);background:var(--white);
-  border:1px solid var(--line);}
-.ws--plain{grid-template-columns:minmax(0,1fr);}
+/* Buttons: the live site's primary button. Pill, Deep Teal, Roboto 600, hover fades to 80%. */
+.btn{display:inline-block;background:var(--teal);color:var(--white);border-radius:300px;
+  font:600 clamp(14.92px,14.4px + .13vw,16.27px)/normal var(--body);text-transform:capitalize;
+  text-decoration:none;padding:1.106em 1.438em;transition:opacity .1s linear;}
+.btn:hover{opacity:.8;}
+/* Text links: the live site's tertiary button. Hover fills Deep Teal with white text. */
+.link{display:inline-block;color:var(--teal);font:600 clamp(14.92px,14.4px + .13vw,16.27px)/normal var(--body);
+  text-decoration:none;padding:.22em 0;transition:background-color .1s linear,color .1s linear;}
+.link:hover{background:var(--teal);color:var(--white);}
+
+/* Workshop list: one per row, banner across the card, details on white below (as on ti.to). */
+.list{background:var(--chalk);padding:clamp(40px,5vw,80px) 0 clamp(56px,7vw,104px);}
+.ws-list{display:grid;gap:clamp(24px,3vw,40px);}
+.ws{background:var(--white);border-radius:16px;overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.04);}
 .ws-banner{display:block;line-height:0;}
 .ws-banner img{display:block;width:100%;height:auto;}
-.ws-body{display:flex;flex-direction:column;align-items:flex-start;gap:18px;padding:28px 32px 32px;}
-.ws-title{font:400 clamp(26px,4.5vw,36px)/1.2 var(--head);margin:0;}
-.ws-title a{color:var(--iron);text-decoration:none;}
+.ws-body{padding:28px 36px 32px;}
+.ws-title{font:400 clamp(23px,21.5px + .36vw,26.64px)/1.176 var(--head);letter-spacing:-.02em;
+  margin:0 0 12px;}
+.ws-title a{color:var(--black);text-decoration:none;}
 .ws-title a:hover{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px;}
-/* Guide p.21 date gradient, trimmed to the 8%-68% span where white text clears 3:1, with
-   large bold text (22px bold is WCAG "large"). Option c-alt, chosen 2026-09-30. */
-.ws-band{align-self:stretch;color:#FFFFFF;padding:14px 20px;
-  background:linear-gradient(90deg,#04A6A4 0%,#008F23 70%,#45A928 100%);}
-.ws-band p{margin:0;font-weight:700;font-size:22px;}
+.ws-facts{color:var(--slate);margin:0 0 24px;}
+.ws-facts p{margin:0;}
+.ws-when{font-weight:700;}
+.ws-action{display:flex;flex-wrap:wrap;align-items:center;gap:12px 28px;}
 .ws-price{margin:0;font-weight:700;}
-.ws-cta{display:inline-block;background:var(--iron);color:#FFFFFF;font:700 24px/1.2 var(--body);
-  text-decoration:none;padding:14px 40px;}
-.ws-cta:hover{background:var(--teal);}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);
   clip-path:inset(50%);white-space:nowrap;}
-.empty{background:var(--white);border:1px solid var(--line);padding:28px 32px;margin:0;}
+.empty{background:var(--white);border-radius:16px;padding:28px 36px;margin:0;}
 
-.site-foot{color:var(--slate);padding:48px 0 64px;}
+.site-foot{color:var(--slate);font-size:clamp(14.92px,14.4px + .13vw,16.27px);padding:40px 0 56px;}
 .site-foot p{margin:0 0 8px;}
 
-@media (max-width:760px){
-  .ws{grid-template-columns:minmax(0,1fr);}
+@media (max-width:767px){
+  :root{--gutter:6vw;}
   .ws-body{padding:20px 20px 24px;}
 }
 """
@@ -562,29 +588,39 @@ PAGE = """<!doctype html>
 <title>Public Workshops | Sense &amp; Respond Learning</title>
 <meta name="description" content="{description}">
 <link rel="canonical" href="{site}/">
+<link rel="icon" href="assets/sr-logomark.svg" type="image/svg+xml">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Public Workshops | Sense &amp; Respond Learning">
 <meta property="og:description" content="{description}">
 <meta property="og:url" content="{site}/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400&family=Roboto:wght@400;600;700&display=swap" rel="stylesheet">
 <style>{styles}</style>
 <script type="application/ld+json">{schema}</script>
 </head>
 <body>
-<header class="site-head">
+<header class="top">
   <div class="wrap">
-    <a class="logo" href="https://senseandrespond.co">Sense &amp; Respond Learning</a>
-    <a href="https://senseandrespond.co">Back to senseandrespond.co</a>
+    <a class="logo" href="https://senseandrespond.co"><img src="assets/sr-logo.svg" alt="Sense &amp; Respond Learning" width="156" height="50"></a>
+    <a class="link" href="https://www.senseandrespond.co/individuals">← Back to senseandrespond.co</a>
   </div>
 </header>
-<main class="wrap">
-  <h1>Public Workshops</h1>
-  <h2 class="lede-head">{lede_head}</h2>
-  <p class="lede">{lede}</p>
-  <div class="ws-list">
+<section class="hero">
+  <div class="wrap">
+    <div class="col">
+      <h1>Public Workshops</h1>
+      <p class="eyebrow">FLEXIBLE FORMATS</p>
+      <h2 class="lede-head">{lede_head}</h2>
+      <p class="lede">{lede}</p>
+    </div>
+  </div>
+</section>
+<main class="list">
+  <div class="wrap">
+    <div class="col ws-list">
 {cards}
+    </div>
   </div>
 </main>
 <footer class="site-foot">
@@ -605,6 +641,8 @@ LEDE = ("Our training is available in person or online, live and interactive, de
         "on-site or remotely, wherever you’re located. Created by Jeff Gothelf and Josh Seiden, "
         "and led by our Certified Training Partners worldwide, you get the same training, in "
         "the format that fits.")
+# The key phrase in the lede, highlighted in Key Lime as the live site does.
+LEDE_HIGHLIGHT = "you get the same training, in the format that fits"
 
 
 def event_schema(e, anchor):
@@ -671,7 +709,8 @@ def render_page(events, updated, updated_iso):
     return PAGE.format(
         description=html.escape(DESCRIPTION),
         lede_head=html.escape(LEDE_HEAD),
-        lede=html.escape(LEDE),
+        lede=html.escape(LEDE).replace(html.escape(LEDE_HIGHLIGHT),
+                                        f"<mark>{html.escape(LEDE_HIGHLIGHT)}</mark>", 1),
         site=html.escape(SITE_URL),
         styles=STYLES,
         schema=json_for_script(schema),

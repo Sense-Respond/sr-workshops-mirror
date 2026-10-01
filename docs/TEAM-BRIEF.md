@@ -2,9 +2,13 @@
 
 **For:** Jeff, Natalia
 **From:** Josh
-**Date:** 18 September 2026
+**Date:** 18 September 2026, updated 1 October 2026 (after design review with Natalia)
 
 ---
+
+## Where it stands
+
+The page is live at **workshops.senseandrespond.co**. A script pulls our workshops from ti.to every day and publishes the page. We tested it the way an AI crawler sees it, with no JavaScript, and every workshop is there. After the design review on 1 October, a second design pass is under way. Natalia will repoint the nav once she has approved it.
 
 ## Goals
 
@@ -22,7 +26,7 @@ That rules out the obvious fix. We are on Squarespace 7.1, which has no API for 
 
 ## The solution
 
-Host it on Netlify, where webinar.senseandrespond.co already lives. Same host, different deploy mechanism: the webinar site isn't connected to GitHub, so linking this one to GitHub is a first-time step.
+Host it on Netlify, where webinar.senseandrespond.co already lives, with a GitHub repo driving the daily build.
 
 - A script reads our workshops from the ti.to API once a day
 - It writes a complete, plain HTML page, with every workshop in the markup
@@ -37,32 +41,40 @@ We also add what our webinar subdomain doesn't have today:
 - **robots.txt** that explicitly welcomes GPTBot, ClaudeBot, PerplexityBot and Google-Extended
 - **sitemap.xml** and **llms.txt** for the subdomain
 
-Design follows the 2025 brand guidelines: Oswald and Roboto at the specified sizes, and the Cerulean-to-Spring-Green gradient the guide prescribes for workshop date blocks.
+Design follows the live senseandrespond.co site, so the page looks like the rest of our site. Where the live site is silent, we use the 2025 brand guidelines.
 
-## What we need to decide
+## What we learned along the way
 
-**1. The brand guide and the live site disagree. (Natalia)**
-The guide shows dark Iron rectangular buttons and lists Deep Teal `#345C60` as a sparing accent. Our live site uses Deep Teal pill buttons everywhere as the main action color. Body copy is 18px in the guide and about 14px on the site. For now we match the live site so the new page doesn't look foreign. The real question is whether we correct the site or update the guide.
+**The "duplicate" ti.to events are regional cohorts.** Six pairs of events share a title and dates. Each pair is one run for Americas & Europe and one for Asia-Pacific, Middle East & Africa. The new page shows both, labelled by region. On ti.to itself they still look like duplicates, because the titles are identical. Adding the region to the titles in ti.to would fix that.
 
-*Update, 30 September 2026: decided. The brand guide governs the new page, not the live site. Where the page departs from the guide, the reasons are listed for Natalia under "Brand divergences" in `PROJECT_BRIEF.md`.*
+## What we agreed in the design review (Natalia, 1 October)
 
-**2. Six of our 21 upcoming ti.to events are exact duplicates. (Josh)**
-Six pairs share a title and dates, with slugs differing only by a trailing -1 and -2, all under the `updated-product-training-for-2027` family. Visitors to our ti.to page see each of these listed twice today. If they are separate cohorts or time zones they need distinct titles. If they are mistakes they should be deleted.
+- **The live site is the design reference.** Where the live site and the brand guide differ, the page follows the live site. Natalia will update the guide to match the choices she has made on the site
+- **Buttons** match the live site: rounded, dark green
+- **Header:** no copy of the full site menu. The page gets the logo and the live site's white-to-gradient background
+- **Workshop images:** keep the ti.to images and make them larger, closer to ti.to's own layout. We dropped the idea of trainer portraits
+- **Date, time and place** sit in dark gray text on white, lighter than the title. No gradient band, because our courses use different gradients
+- Natalia supplied the corrected logo and the background image
 
-*Update, 30 September 2026: resolved. They are not duplicates. Each pair is one course run twice, once for Americas & Europe and once for Asia-Pacific, Middle East & Africa. The page lists both and shows the region on each.*
+## Still open
 
-**3. What goes on senseandrespond.co/workshops. (Jeff)**
+**1. A way back to the main site. (Natalia, Josh)**
+Natalia suggested a "Go back" button that returns visitors to the page they came from. We'll try it in the next pass. It needs a small script, so we'll also keep a plain link to senseandrespond.co for anyone who arrives directly.
+
+**2. What goes on senseandrespond.co/workshops. (Jeff)**
 A subdomain is weaker than our main domain for Google. The fix is a short evergreen page on Squarespace about the workshop catalogue, built once by hand, linking to the live schedule. That copy overlaps the repositioning work, where /courses is already the canonical course page. It should probably be scoped into that project rather than decided separately.
 
 ## Next steps
 
-| # | Step | Owner |
-|---|---|---|
-| 1 | Generate a ti.to API token | Josh |
-| 2 | Create the repo, connect it to Netlify, point the `workshops` subdomain | Josh (done 1 Oct: live at workshops.senseandrespond.co) |
-| 3 | Confirm the brand approach for the new page | Natalia |
-| 4 | Resolve the six duplicate ti.to events | Josh (done: regional cohorts, 30 Sep) |
-| 5 | Repoint the "Public Workshops" nav item once the page is live | Natalia |
-| 6 | Decide where the evergreen /workshops copy belongs | Jeff |
+| # | Step | Owner | Status |
+|---|---|---|---|
+| 1 | Build the page and the daily update | Josh | Done |
+| 2 | Put it live at workshops.senseandrespond.co | Josh | Done |
+| 3 | Design pass from the 1 October review | Josh | In progress |
+| 4 | Review the new version | Natalia | After step 3 |
+| 5 | Repoint the "Public Workshops" nav item | Natalia | After step 4 |
+| 6 | Update the brand guide to match the live site | Natalia | Open |
+| 7 | Decide where the evergreen /workshops copy belongs | Jeff | Open |
+| 8 | Add the region to the cohort titles in ti.to, and set their time zones | Josh | Open |
 
-Steps 1 and 2 unblock everything else. Once the page is live we will verify it by loading it with JavaScript switched off and confirming every workshop title is still there.
+Every daily update re-checks that each workshop title is readable with JavaScript switched off.

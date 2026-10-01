@@ -128,11 +128,23 @@ class Page(unittest.TestCase):
         self.assertIn("No public workshops are scheduled right now", page)
         self.assertEqual(self.jsonld(page)["@graph"][0]["@type"], "Organization")
 
-    def test_date_band_and_lede(self):
+    def test_header_and_lede(self):
         page = self.render([ev("a")])
-        self.assertIn("linear-gradient(90deg,#04A6A4 0%,#008F23 70%,#45A928 100%)", page)
+        # Live-site design (2026-10-01): logo linked home, hero image, no gradient date band.
+        self.assertIn('<a class="logo" href="https://senseandrespond.co"><img src="assets/sr-logo.svg"', page)
+        self.assertIn('url("assets/hero-gradient.jpg")', page)
+        self.assertIn('<link rel="icon" href="assets/sr-logomark.svg"', page)
+        self.assertNotIn("linear-gradient", page)
+        self.assertIn('<a class="link" href="https://www.senseandrespond.co/individuals">'
+                      '← Back to senseandrespond.co</a>', page)
         self.assertIn('<h2 class="lede-head">Build these skills, your way</h2>', page)
         self.assertIn("wherever you’re located", page)
+        self.assertIn("<mark>you get the same training, in the format that fits</mark>.", page)
+
+    def test_assets_exist(self):
+        root = os.path.join(os.path.dirname(__file__), "..", "public", "assets")
+        for name in ("sr-logo.svg", "sr-logomark.svg", "hero-gradient.jpg"):
+            self.assertTrue(os.path.isfile(os.path.join(root, name)), name)
 
 class TimesAndSoldOut(unittest.TestCase):
     TIMED = dict(start_at="2026-11-03T09:00:00.000-06:00", end_at="2026-11-05T11:00:00.000-06:00",

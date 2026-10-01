@@ -8,7 +8,11 @@
 
 The Action builds `public/` from the live API and commits it; Netlify deploys on push.
 Latest build (`664e2fb`): 14 workshops, 0 collapsed. Netlify site `sr-workshops.netlify.app`,
-HTTPS working, HTTP redirects to HTTPS. Only the Squarespace nav link remains.
+HTTPS working, HTTP redirects to HTTPS.
+
+**Design pass from the 2026-10-01 review with Natalia: built locally, not yet pushed.**
+Template version 5. See the 2026-10-01 decisions. Once pushed and deployed, Natalia reviews,
+then repoints the nav.
 
 Live checks, 2026-10-01 12:38 UTC:
 - `python3 verify.py https://workshops.senseandrespond.co`: OK. 14 titles in the raw HTML
@@ -28,7 +32,7 @@ Done:
   ignores sold-out tickets
 - `main()` guards per the decisions below. `--from-json` and `--force`
 - `verify.py` checks what a non-JS crawler sees. Takes a directory or the live URL
-- `tests/`: 64 stdlib `unittest` tests. Run with `python3 -m unittest discover tests`
+- `tests/`: 65 stdlib `unittest` tests. Run with `python3 -m unittest discover tests`
 - `.github/workflows/build.yml`: daily at 11:00 UTC, plus a manual run with an optional
   "force" box. Tests, token check, build, verify, commit `public/` only if it changed
 - `netlify.toml`: publishes `public/`, no build command, skips deploys that don't touch
@@ -66,26 +70,18 @@ Open, in order:
 4. Repoint the "Public Workshops" nav item on Squarespace (Natalia)
 
 Also open:
-- **Workshop images, waiting on Josh and the team (raised 2026-10-01).** Each card shows the
-  Ti.to banner, which is a full flyer (logo, campaign headline, title, region, dates, times,
-  format, badge) designed for phone width. In the card's 360px desktop column it is
-  unreadable and repeats the date band. Josh's suggestion: a trainer portrait instead, like
-  https://framerusercontent.com/images/A9slgx5mWNzOzzQ2FbF75vfnA.jpg (2:1, name, company,
-  photo). What's known:
-  - Partner workshops name the trainer in the Ti.to title ("…with Rich Visotcky", "…with
-    Daksh Gupta and Jaya Shrivastava", "…mit Simon Flossmann"). 4 of today's 14. A hand-kept
-    trainer-to-image list could be matched against the title
-  - The ten "Updated Product Training" cohorts name no trainer anywhere: not in the title,
-    and the Ti.to page says only "certified trainers" and "created by Jeff Gothelf and Josh
-    Seiden"
-  - To decide: what the cohorts show (one shared image, no image, trainers named by hand
-    per slug, or keep the banner); where portraits come from; and whether to copy them into
-    the repo or link to framerusercontent.com (a Framer edit could break links)
-  - The page works without images: cards with no banner already render as text-only
-    (`ws--plain`)
 - Typo in the Ti.to banner for the OKR cohorts: "OBJECTVES & KEY RESULTS". It's in the image
   file, so it has to be fixed wherever the banners are made
-- Logo is a text placeholder until Natalia supplies the SVG
+- **"Go back" button (Natalia, next pass).** A button that returns visitors to the page they
+  came from. It needs a small script (`history.back()` or `document.referrer`), which the
+  "only `<script>` is the JSON-LD" test forbids today, so it needs a decision to allow one
+  script that touches no workshop data. Keep a plain link to senseandrespond.co as the
+  fallback for visitors who arrive directly. The top bar has that link now: "← Back to
+  senseandrespond.co", to https://www.senseandrespond.co/individuals (Josh, 2026-10-01)
+- Ti.to banners are full-size PNGs, about 4,170px wide and 12.6MB for today's 14. They
+  lazy-load, so only the ones scrolled to are fetched, but each is about 900KB on a phone.
+  Smaller exports from wherever the banners are made would fix it
+- Natalia to review the 2026-10-01 design pass, then repoint the nav
 - No session times are entered in Ti.to for any event. When they are, the band shows them
   (e.g. "9:00–11:00 AM CDT") instead of the time zone
 - The ten regional cohorts carry Ti.to's default time zone, UTC, so they show a region but
@@ -132,6 +128,54 @@ scrapped. See `docs/FINDINGS.md`.
 
 ## Decisions Made
 
+Design review with Natalia, 2026-10-01 (items 1 to 9):
+
+- **2026-10-01. The live site is the design reference.** senseandrespond.co, not the brand
+  guide. Where they conflict, follow the live site. The guide still applies where the live
+  site is silent. Reverses the 2026-09-30 "guide governs" decision. Natalia will update the
+  guide to match the live site. `docs/BRAND-SPEC.md` and the divergences table below follow
+  this rule.
+- **2026-10-01. References.** Three screenshots in `docs/reference/` (`srl_home_reference.jpg`,
+  `srl_training_reference.jpg`, `srl_tito_reference.jpg`) set the overall look. Exact values
+  (colours, radius, hover, sizes, spacing) come from the live site's computed CSS, measured
+  in headless Chrome on 2026-10-01 at 390, 768, 1024 and 1440px wide. Recorded in
+  `docs/BRAND-SPEC.md`, "Live site values". Where no CSS value exists (the live cards are
+  Squarespace shape blocks, drawn as SVG), the screenshots decide.
+- **2026-10-01. Body text matches the live site.** Roboto 400, 1.1rem: 19.7px at desktop
+  width, 17px on phones, line height 1.6. The "about 14px" noted in September was wrong.
+- **2026-10-01. Buttons and links match the live site.** Buttons are its primary button: a
+  Deep Teal `#345C60` pill (`border-radius: 300px`), white Roboto 600 at 16.3px desktop /
+  14.9px phone, capitalized, hover fades to 80% opacity. Text links like "Upskill on
+  your own →" are its tertiary button: Deep Teal Roboto 600, no underline, and on
+  hover a Deep Teal fill with white text.
+- **2026-10-01. Header: top bar, then hero.** No copy of the site nav. A white top bar with
+  the full colour logo on the left, 50px tall as on the live site, linked to
+  senseandrespond.co, with the guide's clear space (25px, half its height) around it. Then a
+  hero with Natalia's gradient image behind the H1 and intro. On the right of the top bar,
+  "← Back to senseandrespond.co" (arrow on the left, pointing left, as back links do) goes to
+  https://www.senseandrespond.co/individuals, the page that lists public workshops (Josh). Assets in `public/assets/`:
+  `sr-logo.svg`, `sr-logomark.svg` (now the favicon) and `hero-gradient.jpg` (1600x1025).
+  They are committed, not generated; `build.py` never deletes them.
+- **2026-10-01. Cards follow ti.to's layout.** One workshop per row, in a 960px column on a
+  Chalk `#F9FAF0` section. The Ti.to banner runs across the full card width, with title and
+  details below on white. White card, 16px radius, soft shadow. Drops the trainer-portrait
+  idea raised earlier today.
+- **2026-10-01. No gradient date band.** Date, time, region and place in Slate `#58585A`
+  (the live site's grey, used for its eyebrow labels; 7.1:1 on white) under the black Oswald
+  title. The date line is bold. Reason (Natalia): the courses use different gradients.
+  Supersedes the 2026-09-30 "option c-alt" decision.
+- **2026-10-01. Live-site touches, used sparingly.** One eyebrow label, "FLEXIBLE FORMATS"
+  (Roboto Bold, Slate, body size, as on the live Individuals page), above "Build these
+  skills, your way". One Key Lime `#E2F46F` highlight in the intro, on "you get the same
+  training, in the format that fits".
+- **2026-10-01. "Go back" button: not this pass.** Recorded under "Also open". Plain link to
+  senseandrespond.co as the fallback.
+- **2026-10-01. Type scale from the live site.** Oswald Regular (400) throughout, no
+  capitals: H1 78.5px desktop / 48px phone, the intro H2 61.2px / 38px, workshop titles at
+  the live H4 size, 26.6px / 23px. Gutters 4vw, 6vw under 768px. Template version 5.
+
+Earlier:
+
 - **2026-10-01. Repair Ti.to's doubled banner URLs.** `banner_url()` keeps the last
   `https://` URL in the string. All 14 repaired URLs return 200. A normal URL passes
   through unchanged, so if Ti.to fixes this the code needs no change. A small addition to
@@ -173,23 +217,26 @@ scrapped. See `docs/FINDINGS.md`.
 - **2026-09-30. Brand guide PDF stays out of git.** It is 20MB and a client-version document.
   It lives in `docs/` locally and is gitignored. Anyone working without it uses
   `docs/BRAND-SPEC.md`, which records what was checked against it.
-- **2026-09-30. Date band: option c-alt.** The guide's p.21 gradient trimmed to the 8%-68%
+- ~~**2026-09-30. Date band: option c-alt.** The guide's p.21 gradient trimmed to the 8%-68%
   span where white text clears 3:1: `#04A6A4` to `#008F23` (at 70%) to `#45A928`, white text
   22px bold. Chosen over (a) the guide as written, which fails at 1.6:1; (b) guide colours with
-  text squeezed into the middle; and (c) darkened ends, which turned the lime end olive.
+  text squeezed into the middle; and (c) darkened ends, which turned the lime end olive.~~
+  Superseded 2026-10-01: no date band
 - **2026-09-30. Page intro copy (Josh).** Headline "Build these skills, your way", then
   "Our training is available in person or online, live and interactive, delivered on-site or
   remotely, wherever you’re located. Created by Jeff Gothelf and Josh Seiden, and led by our
   Certified Training Partners worldwide, you get the same training, in the format that fits."
-  The H1 stays "Public Workshops"; the headline sits under it as an H2 styled per guide p.18.
+  The H1 stays "Public Workshops"; the headline sits under it as an H2 (styled from the live
+  site since 2026-10-01).
 - **2026-09-30. Meta description (Josh).** "Upcoming workshops from Sense & Respond Learning:
   live training in Product Management, Lean UX, Product Discovery, OKRs, Outcomes, and
   Storytelling." Also used for `og:description` and the `llms.txt` summary.
-- **2026-09-30. The brand guide PDF governs design.** `docs/S&R Brand Guidelines 2025 for
+- ~~**2026-09-30. The brand guide PDF governs design.** `docs/S&R Brand Guidelines 2025 for
   client 20250611.pdf`. `docs/BRAND-SPEC.md` is a summary, and where they differ the PDF wins.
   Diverge only where the guide is silent or following it would cause a real problem, such as
   readability. Record each divergence, with the reason, under "Brand divergences" below so
-  Josh can take it to Natalia. Supersedes the 2026-09-18 "match the live site" decision.
+  Josh can take it to Natalia. Supersedes the 2026-09-18 "match the live site" decision.~~
+  Reversed 2026-10-01: the live site is the reference
 - **2026-09-30. With a token, the API is the only source.** If `TITO_API_TOKEN` is set and
   the API call fails for any reason (401, timeout, bad JSON), the build exits non-zero and
   writes nothing. The public-timeline scrape runs only when no token is set. Reason: the scrape
@@ -223,24 +270,31 @@ scrapped. See `docs/FINDINGS.md`.
 - **2026-09-18. Host on a subdomain, not the main site.** Squarespace 7.1 cannot serve an
   auto-updating page. See `docs/FINDINGS.md` section 2
 - ~~**2026-09-18. Where the brand guide and the live site disagree, match the live site.**
-  Type follows the guide.~~ Superseded 2026-09-30: the guide PDF governs. See above
+  Type follows the guide.~~ Superseded 2026-09-30: the guide PDF governs. That was itself
+  reversed on 2026-10-01: the live site is the reference again, type included
 - **2026-09-18. Collapse duplicate events by default**, keyed on title + start + end + location
 
 ## Brand divergences (for Natalia)
 
-Where the page departs from the guide, or fills a gap in it, and why. Updated 2026-09-30.
+Since 2026-10-01 the page follows the live site. This table lists where the live site, and so
+the page, departs from the 2025 guide, for Natalia's guide update, plus the gaps both leave
+that the page had to fill. Updated 2026-10-01.
 
-| # | What | Guide | Page | Why |
+| # | What | Guide | Live site and page | Note |
 |---|---|---|---|---|
-| 1 | Date band gradient | p.21 gradient `#05AABC` to `#008F23` to `#BFD630`, white text | Same gradient trimmed to its 8%-68% span: `#04A6A4` to `#008F23` to `#45A928`. No Spring Green end | White text clears 3:1 only across that span of the full gradient and never reaches 4.5:1. The lime end is 1.6:1 |
-| 2 | Date band text size | Silent | 22px Roboto Bold | 22px bold counts as "large text" under WCAG, which sets the contrast bar at 3:1 rather than 4.5:1 |
-| 3 | H1 at phone width | 72px | Scales from 44px on phones up to 72px | Guide gives one size. 72px capitals overflow a phone screen |
-| 4 | H2 at phone width | 36px | Scales from 26px on phones up to 36px | Same reason. Ti.to titles are long |
-| 5 | Button colour | p.19 mockup uses `#343131`, not a palette value | Iron `#39393D` | Nearest palette colour. Looks the same |
-| 6 | Link colour and button hover | Silent | Deep Teal `#345C60` | Palette secondary colour, used sparingly as the guide says. 7.4:1 on white |
-| 7 | Keyboard focus ring | Silent | 3px Iron outline | Needed for keyboard users |
-| 8 | Colour names | p.13 labels `#00A651` "Violet" and `#0072BC` "New Leaf" | Unaffected | The labels look mislabelled |
-| 9 | Live site | Guide | Page follows the guide | The live site uses Deep Teal pill buttons and ~14px body text. The drift is on the live site's side now |
+| 1 | H1 | Oswald **Bold** 72px, capitals in the samples | Oswald **Regular** 78.5px at 1440px wide, 48px on phones, sentence case | Live H1 is 4.5rem on an 18px root |
+| 2 | H2 | Oswald Regular 36px | Oswald Regular 61.2px desktop, 38px phone | Live H2 is 3.5rem |
+| 3 | Body text | Roboto 18px | Roboto 1.1rem: 19.7px desktop, 17px phone, line height 1.6 | |
+| 4 | Text colour | Mockups use dark grey `#343131` | Black `#000000` for body and headings; Slate `#58585A` for eyebrows and secondary text | |
+| 5 | Buttons | Dark rectangle, Roboto Bold 24px (p.19 mockup) | Deep Teal `#345C60` pill, radius 300px, Roboto 600 16.3px, capitalized, hover to 80% opacity | |
+| 6 | Deep Teal's role | Secondary, sparing accent | Main action colour: buttons and links | |
+| 7 | Text links | Silent | Deep Teal Roboto 600, no underline; hover fills Deep Teal, white text | The live tertiary button |
+| 8 | Workshop date gradient | p.21: date, time and place on a gradient, white text | Not used. Slate text on white | Courses use different gradients (Natalia) |
+| 9 | Eyebrow labels | Silent | Roboto Bold, body size, Slate, typed in capitals | Live Individuals page |
+| 10 | Hero background | Silent | White fading to Key Lime and cyan, as an image (`hero-gradient.jpg`) | Supplied by Natalia |
+| 11 | Card radius | Silent | 16px (page only) | Live cards are SVG shapes with no CSS radius; chosen to match ti.to |
+| 12 | Keyboard focus ring | Silent | 3px Iron outline (page only) | Needed for keyboard users. Live site removes the outline on hover only |
+| 13 | Colour names | p.13 labels `#00A651` "Violet" and `#0072BC` "New Leaf" | Unaffected | The labels look mislabelled |
 
 ## Definition of done
 

@@ -4,10 +4,69 @@ Extracted from **SR Brand Guidelines 2025** (client version, 11 June 2025), whic
 folder as `S&R Brand Guidelines 2025 for client 20250611.pdf`. It is gitignored, so it exists
 only on machines where someone has put it there. Page numbers refer to the PDF.
 
-**The PDF governs (decided 2026-09-30).** This file is a summary. Where the two differ, the PDF
-wins. Diverge only where the guide is silent or following it would cause a real problem, such
-as readability, and record each divergence in `PROJECT_BRIEF.md` so it can go to Natalia.
-Corrections from checking this file against the PDF on 2026-09-30 are marked **(corrected)**.
+**The live site governs (decided 2026-10-01, design review with Natalia).** senseandrespond.co
+is the design reference. Where it conflicts with the guide, follow the live site. The guide
+still applies where the live site is silent. Natalia will update the guide to match the live
+site. This reverses the 2026-09-30 rule that the PDF governs. The measured live values are in
+"Live site values" at the top; the guide summary follows, for the gaps. Corrections from
+checking this file against the PDF on 2026-09-30 are marked **(corrected)**.
+
+Overall look: the three screenshots in `docs/reference/`. Exact values: the live CSS, below,
+not the screenshots.
+
+---
+
+## Live site values (measured 2026-10-01)
+
+Computed styles read in headless Chrome from senseandrespond.co (home and /individuals) at
+390, 768, 1024 and 1440px wide. Squarespace scales type with the viewport: the root is 18px
+from 1024px up and 16px below, and the theme sizes are rem multiples. The page uses
+`clamp()`s fitted to the measured points.
+
+**Type.** Oswald Regular (400) for every heading, sentence case, letter-spacing -0.02em.
+Roboto for everything else, letter-spacing 0.01em.
+
+| Element | Theme size | 1440px | 1024px | 390px | Line height |
+|---|---|---|---|---|---|
+| H1 | 4.5rem | 78.5px | 61.0px | 53.8px | 1.03 |
+| H2 | 3.5rem | 61.2px | 48.7px | 43.0px | 1.08 |
+| H3 | 2.5rem | 43.9px | | | 1.13 |
+| H4 | 1.5rem | 26.6px | | | 1.18 |
+| Body (Roboto 400) | 1.1rem | 19.7px | 19.2px | 17.1px | 1.6 |
+| Small, nav, buttons | 0.9rem | 16.3px | 16.3px | 14.9px | |
+
+The page uses the live H4 size for workshop titles, which are long.
+
+**Colour.**
+
+| Use | Value |
+|---|---|
+| Body and heading text | Black `#000000` |
+| Eyebrow labels, secondary text | Slate `#58585A` |
+| Primary buttons, links | Deep Teal `#345C60` (`hsl(185.45 29.73% 29.02%)`) |
+| Some secondary buttons and links (e.g. "Meet Jeff and Josh") | `#038A98` |
+| Text highlight | Key Lime `#E2F46F` (`hsl(68.24 86% 70%)`), marker style, 1em thick |
+| Site background | Chalk `#F9FAF0`; most sections are white |
+
+**Primary button** ("Explore Our Team Training"): background Deep Teal, white text, Roboto
+600, 0.9rem, `text-transform: capitalize`, padding 18px 23.4px (16px 20.8px on phones),
+`border-radius: 300px`, no border. Hover: `opacity: .8`, `transition: opacity .1s linear`.
+
+**Text link** ("Upskill on your own →", Squarespace's tertiary button): Deep Teal, Roboto
+600, 0.9rem, no underline, padding 3.6px 0. Hover: background Deep Teal, white text,
+`transition: background-color .1s linear, color .1s linear`.
+
+**Eyebrow** ("FLEXIBLE FORMATS", "INDIVIDUAL TRAINING"): Roboto Bold at body size, Slate,
+typed in capitals.
+
+**Header.** About 108px tall at 1440px. Logo 156x50px, left, at the 4vw gutter. Nav Roboto
+400 0.9rem, black. Then a hero with a gradient background image.
+
+**Layout.** Site max width 1400px. Gutter 4vw, 6vw on phones (under 768px).
+
+**Not in the CSS.** The rounded cards on the live pages are Squarespace shape blocks, drawn as
+SVG, so they have no radius to read. The page's 16px card radius is chosen to match ti.to's
+cards (`srl_tito_reference.jpg`).
 
 ---
 
@@ -93,8 +152,10 @@ Contrast of white text on it (WCAG):
 White clears 3:1 (the bar for large text) only from about 8% to 68% across, and never reaches
 4.5:1 (the bar for body text).
 
-**On the page (decided 2026-09-30):** the gradient trimmed to its 8%-68% span, with white
-22px Roboto Bold text. A divergence from the guide, recorded in `PROJECT_BRIEF.md`:
+**Not used on the page since 2026-10-01.** The workshop date band is gone: date, time,
+region and place are Slate text on white. Reason (Natalia): the courses use different
+gradients. Kept as a record: from 2026-09-30 the page used the gradient trimmed to its 8%-68%
+span, with white 22px Roboto Bold text:
 
 ```css
 background: linear-gradient(90deg, #04A6A4 0%, #008F23 70%, #45A928 100%);
@@ -113,28 +174,19 @@ underline. Use rarely.
 
 ## Where the guide and the live site disagree
 
-**Superseded 2026-09-30.** This used to say "match the live site". The rule is now that the
-guide governs, so where they disagree the page follows the guide. The drift itself still goes
-to Natalia.
+**Since 2026-10-01: use the live site.** The full list, for Natalia's guide update, is the
+"Brand divergences" table in `PROJECT_BRIEF.md`. The main ones:
 
-| Element | Guide says | Live site does | Use |
-|---|---|---|---|
-| Buttons | Dark rectangle, white text (p.19 mockup) | Deep Teal `#345C60` pill, `border-radius: 300px`, white text | **Guide.** Iron `#39393D` rectangle, Roboto Bold 24px |
-| Deep Teal role | Secondary, sparing accent | Main action color throughout | **Guide.** Sparing: links and button hover only |
-| Body size | 18px | about 14px | **Guide.** 18px |
+| Element | Guide says | Live site does (and the page now does) |
+|---|---|---|
+| Buttons | Dark rectangle, Roboto Bold 24px (p.19 mockup) | Deep Teal `#345C60` pill, radius 300px, Roboto 600 0.9rem |
+| Deep Teal role | Secondary, sparing accent | Main action colour throughout |
+| H1 | Oswald Bold 72px, capitals | Oswald Regular 4.5rem (78.5px), sentence case |
+| Body size | 18px | 1.1rem: 19.7px desktop, 17px phone. The "about 14px" noted in September was wrong |
+| Text colour | `#343131` in the p.19 mockup | Black `#000000` |
 
-The p.19 mockup's button and heading colour is `#343131`, which is not a palette value. The
-page uses the nearest palette colour, Iron `#39393D`.
-
-The mockup also sets H1 in capitals (as does the p.18 sample), with dark headings on light
-ground. The page follows both.
-
-Other values sampled from the live site, for reference:
-
-- Page background `#F9FAF0` (Chalk, which matches the guide's neutral)
-- Button hover on the live site uses `#038A98`, close to but not exactly Cerulean `#05ACBD`.
-  Prefer the brand value `#05ACBD`
-- Headings Oswald, body Roboto, consistent with the guide
+History: 2026-09-18 said match the live site; 2026-09-30 said the guide governs; 2026-10-01
+reverted to the live site.
 
 ## Writing voice
 
