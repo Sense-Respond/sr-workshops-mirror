@@ -26,8 +26,12 @@ Live checks, 2026-10-01 18:05 UTC, after the design pass:
 Done:
 - `build.py` writes `index.html`, `workshops.json`, `robots.txt`, `sitemap.xml` and
   `llms.txt`. Every workshop is in the raw HTML with an `<h2>`, an anchor id from its slug,
-  `<time datetime>` on every date, and one full JSON-LD `Event`. The only `<script>` on the
-  page is the JSON-LD
+  `<time datetime>` on every date, and one full JSON-LD `Event`. The only scripts are the
+  JSON-LD, GA4's gtag.js and one small inline consent script (since 2026-10-01). None of
+  them renders workshop data
+- Google Analytics 4 on the main site's property, behind a cookie-consent banner styled like
+  the live site's (Consent Mode v2, denied by default). Links to Ti.to events carry
+  `?source=workshops-page`
 - Data from the Ti.to Admin API v3 (v2 is retired). Each card shows the Ti.to banner, the
   title, then date, session times or time zone, region and place in Slate. Sold-out status
   and a "from" price that ignores sold-out tickets
@@ -35,7 +39,7 @@ Done:
   Deep Teal pill buttons, one workshop per row. Assets committed in `public/assets/`
 - `main()` guards per the decisions below. `--from-json` and `--force`
 - `verify.py` checks what a non-JS crawler sees. Takes a directory or the live URL
-- `tests/`: 65 stdlib `unittest` tests. Run with `python3 -m unittest discover tests`
+- `tests/`: 67 stdlib `unittest` tests. Run with `python3 -m unittest discover tests`
 - `.github/workflows/build.yml`: daily at 11:00 UTC, plus a manual run with an optional
   "force" box. Tests, token check, build, verify, commit `public/` only if it changed
 - `netlify.toml`: publishes `public/`, no build command, skips deploys that don't touch
@@ -81,12 +85,16 @@ Open, in order:
    https://workshops.senseandrespond.co (Natalia, after step 4)
 
 Also open:
+- **Ti.to source `workshops-page` (Josh).** Ti.to's docs describe saving a source on each
+  event (Event > Source Tracking) to get its link and report. Save `workshops-page` on each
+  current event and on new ones, or check with Ti.to whether orders with an unsaved
+  `?source=` are recorded anyway
 - Typo in the Ti.to banner for the OKR cohorts: "OBJECTVES & KEY RESULTS". It's in the image
   file, so it has to be fixed wherever the banners are made
 - **"Go back" button (Natalia, next pass).** A button that returns visitors to the page they
-  came from. It needs a small script (`history.back()` or `document.referrer`), which the
-  "only `<script>` is the JSON-LD" test forbids today, so it needs a decision to allow one
-  script that touches no workshop data. Keep a plain link to senseandrespond.co as the
+  came from. It needs a small script (`history.back()` or `document.referrer`). Since
+  2026-10-01 the script test allows exactly the JSON-LD, gtag.js and the consent script, so
+  this would be one more change to that rule, or a few lines added to the consent script. Keep a plain link to senseandrespond.co as the
   fallback for visitors who arrive directly. The top bar has that link now: "← Back to
   senseandrespond.co", to https://www.senseandrespond.co/individuals (Josh, 2026-10-01)
 - Ti.to banners are full-size PNGs, about 4,170px wide and 12.6MB for today's 14. They
@@ -142,9 +150,44 @@ scrapped. See `docs/FINDINGS.md`.
 - **Build trigger:** GitHub Action, daily at 11:00 UTC, commits the output. Netlify deploys on
   push. Netlify's own build command stays empty
 - **The page must be server-rendered HTML.** No client-side rendering of workshop data, at all,
-  for any reason
+  for any reason. Scripts allowed since 2026-10-01: the JSON-LD, Google's gtag.js and the
+  inline consent script, and no others. See Decisions
 
 ## Decisions Made
+
+Analytics, 2026-10-01 (Josh):
+
+- **2026-10-01. Google Analytics 4, on the main site's property.** Measurement ID
+  `G-WPJMQ52FEF`, the same property as senseandrespond.co, so both report in one view. The
+  standard gtag.js snippet with default cookie settings (`cookie_domain` auto): the `_ga`
+  cookies are set on `.senseandrespond.co`, so a visitor's sessions are shared with the main
+  site. No cross-domain config needed. Reason: one unified view of the site and this page.
+- **2026-10-01. Cookie consent with Google Consent Mode v2.** All four consent types
+  (`ad_storage`, `ad_user_data`, `ad_personalization`, `analytics_storage`) default to
+  denied, before `gtag('config')`. "Accept all" grants all four; "Decline" keeps them
+  denied. The choice is kept in `localStorage` (`sr-consent`) and reapplied on later visits,
+  so the banner shows once. While denied, GA gets cookieless pings only. No third-party
+  consent platform. The banner is the live site's: a fixed Chalk bar, 14.5px text, a
+  "Decline" text button and an "Accept all" Deep Teal pill, both 12px Roboto 600. The live
+  site has "Manage cookies" where this has "Decline": there is only one kind of cookie
+  here, so a settings panel would offer nothing more. The banner is `hidden` in the HTML and
+  shown by the script, so visitors and crawlers without JavaScript never see it. The choice
+  isn't shared with the main site: Squarespace keeps its own consent record, so a visitor
+  is asked on each.
+- **2026-10-01. The no-JavaScript rule now allows analytics and consent.** The page may load
+  gtag.js and run the inline consent script. Still no client-side rendering of workshop
+  data: every workshop stays in the raw HTML, and `verify.py` still checks every title. The
+  test allows exactly three scripts (JSON-LD, the inline consent script, gtag.js), checks the
+  inline script is `ANALYTICS_JS` from `build.py`, and checks it holds no workshop data.
+  Reason: analytics is needed and doesn't change what crawlers read. Amends the "must be
+  server-rendered" technical decision.
+- **2026-10-01. Ti.to source tracking: `?source=workshops-page`.** Added to every link on the
+  page that goes to an event: banner, title and Register / See details button. The JSON-LD
+  and `llms.txt` keep the plain event URL, so crawlers and assistants see the canonical
+  address. Ti.to's parameter is `source`
+  (https://help.tito.io/en/articles/3846161-source-tracking). Ti.to's docs say a source is
+  saved per event in the dashboard, which generates the link. Whether orders through an
+  unsaved source are still recorded is not confirmed; see "Also open".
 
 Design review with Natalia, 2026-10-01 (items 1 to 9):
 

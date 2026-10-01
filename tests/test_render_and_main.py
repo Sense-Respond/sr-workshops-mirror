@@ -91,10 +91,43 @@ class Page(unittest.TestCase):
         self.assertEqual(p.titles, [e["title"] for e in events])
         self.assertEqual(p.article_ids, [e["slug"] for e in events])
 
-    def test_no_javascript_beyond_jsonld(self):
-        page = self.render(sample_events())
+    def test_only_jsonld_analytics_and_consent_scripts(self):
+        # Rule since 2026-10-01: JSON-LD, the inline consent/GA script and gtag.js, nothing
+        # else. No script may carry or render workshop data.
+        events = sample_events()
+        page = self.render(events)
         scripts = re.findall(r"<script\b[^>]*>", page)
-        self.assertEqual(scripts, ['<script type="application/ld+json">'])
+        self.assertEqual(scripts, [
+            '<script type="application/ld+json">',
+            '<script>',
+            '<script async src="https://www.googletagmanager.com/gtag/js?id=G-WPJMQ52FEF">',
+        ])
+        inline = re.search(r"<script>(.*?)</script>", page, re.S).group(1)
+        self.assertEqual(inline, build.ANALYTICS_JS)
+        for e in events:
+            self.assertNotIn(e["title"], inline)
+        self.assertNotIn("innerHTML", inline)
+        self.assertNotIn("fetch(", inline)
+
+    def test_consent_mode_defaults_denied(self):
+        js = build.ANALYTICS_JS
+        self.assertLess(js.index('gtag("consent", "default"'), js.index('gtag("config", "G-WPJMQ52FEF")'))
+        self.assertIn('choice === "granted" ? "granted" : "denied"', js)
+        for key in ("ad_storage", "ad_user_data", "ad_personalization", "analytics_storage"):
+            self.assertIn(key, js)
+        page = self.render([ev("a")])
+        self.assertIn('<section class="consent" id="consent" aria-label="Cookie consent" hidden>', page)
+
+    def test_links_to_tito_carry_source(self):
+        e = ev("okr", banner="https://example.com/b.png")
+        page = self.render([e])
+        tagged = e["url"] + "?source=workshops-page"
+        self.assertEqual(page.count(f'href="{tagged}"'), 3)  # banner, title, button
+        self.assertNotIn(f'href="{e["url"]}"', page)
+        event = [n for n in self.jsonld(page)["@graph"] if n["@type"] == "Event"][0]
+        self.assertEqual(event["url"], e["url"])  # structured data keeps the plain URL
+        self.assertEqual(build.tracked_url("https://ti.to/a/b?source=x&discount_code=y"),
+                         "https://ti.to/a/b?discount_code=y&source=workshops-page")
 
     def test_full_event_jsonld(self):
         e = ev("okr", price_from=1200.0, banner="https://example.com/b.png")

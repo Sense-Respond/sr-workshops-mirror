@@ -68,6 +68,18 @@ that does not meet the brand spec or the crawlability criteria.
   currency, url, eventAttendanceMode, organizer
 - S&R logo, and a link back to senseandrespond.co
 
+## Analytics and consent (2026-10-01)
+
+Constants at the top of `build.py`: `GA_MEASUREMENT_ID` (`G-WPJMQ52FEF`, the main site's GA4
+property) and `TITO_SOURCE` (`workshops-page`). `ANALYTICS_JS` is the one inline script:
+Consent Mode v2 defaults (denied unless `localStorage["sr-consent"]` is `"granted"`), the
+gtag config, and the banner's click handler. `tracked_url()` adds `?source=` to on-page event
+links only.
+
+To test locally without sending hits to the real property, block
+`*google-analytics.com/g/collect*` in the browser (DevTools > Network request blocking).
+Otherwise a local visit shows up in GA with hostname `127.0.0.1`.
+
 ## Environment variables
 
 | Variable | Default | Purpose |
@@ -84,7 +96,7 @@ Options: `--from-json PATH` builds from a saved `workshops.json` (e.g.
 
 ## Tests
 
-All of these are now in `tests/` and pass (65 tests, 2026-10-01; the API tests use v3-shaped fixtures). One caveat: the timeline
+All of these are now in `tests/` and pass (67 tests, 2026-10-01; the API tests use v3-shaped fixtures). One caveat: the timeline
 test originally ran against real markup (11 events). That markup no longer exists, so it now
 runs against a synthetic fixture built from the documented class names, plus the real
 30 September empty page.

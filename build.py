@@ -51,11 +51,18 @@ SITE_URL = (os.environ.get("SITE_URL", "").strip()
             or "https://workshops.senseandrespond.co").rstrip("/")
 
 # Bump whenever the rendered output changes, so the no-change guard lets the new design ship.
-TEMPLATE_VERSION = 5
+TEMPLATE_VERSION = 6
 
 TIMELINE_URL = f"https://ti.to/{ACCOUNT}/"
 API_BASE = f"https://api.tito.io/v3/{ACCOUNT}"
 USER_AGENT = "sr-workshops-mirror/1.0 (+https://senseandrespond.co)"
+
+# Google Analytics 4: the main site's property, so senseandrespond.co and this subdomain report
+# together. Default cookie settings (cookie_domain auto) share sessions across the two.
+GA_MEASUREMENT_ID = "G-WPJMQ52FEF"
+# Ti.to Source Tracking: appended to every on-page link to an event, so Ti.to can attribute
+# orders to this page. The source must also be saved on each event in the Ti.to dashboard.
+TITO_SOURCE = "workshops-page"
 
 CURRENCY_SYMBOLS = {"USD": "$", "EUR": "€", "GBP": "£", "CAD": "CA$", "AUD": "A$", "INR": "₹"}
 
@@ -455,13 +462,22 @@ def time_range_html(e):
             f'<time datetime="{end.isoformat(timespec="minutes")}">{html.escape(rest)}</time>')
 
 
+def tracked_url(url):
+    """The event URL with ?source= added, for links on the page. JSON-LD and llms.txt keep the
+    plain URL, so crawlers and assistants see the canonical address."""
+    parts = urllib.parse.urlsplit(url)
+    query = urllib.parse.parse_qsl(parts.query, keep_blank_values=True)
+    query = [(k, v) for k, v in query if k != "source"] + [("source", TITO_SOURCE)]
+    return urllib.parse.urlunsplit(parts._replace(query=urllib.parse.urlencode(query)))
+
+
 def place_label(e):
     return "Live online" if is_online(e.get("location")) else e["location"]
 
 
 def card_html(e, anchor):
     esc = html.escape
-    url = esc(e["url"])
+    url = esc(tracked_url(e["url"]))
     price = format_price(e.get("price_from"), e.get("currency"))
 
     bits = [f'<article class="ws" id="{esc(anchor)}">']
@@ -571,6 +587,22 @@ mark{background:var(--lime);color:inherit;padding:0 .1em;
   clip-path:inset(50%);white-space:nowrap;}
 .empty{background:var(--white);border-radius:16px;padding:28px 36px;margin:0;}
 
+/* Cookie consent: the live site's banner. Fixed bar, Chalk, small text, a text-link button
+   and a pill button. Hidden until the script shows it, so it never appears without JS. */
+.consent{position:fixed;left:0;right:0;bottom:0;z-index:1000;background:var(--chalk);
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 20px;
+  padding:14px 20px;box-shadow:0 -1px 0 rgba(0,0,0,.06);}
+.consent[hidden]{display:none;}
+.consent p{margin:0;flex:1 1 32em;font-size:clamp(13.84px,13.6px + .07vw,14.54px);line-height:1.6;}
+.consent-actions{display:flex;gap:14px;align-items:center;}
+.consent button{font:600 12px/normal var(--body);padding:11px 15px;border:0;cursor:pointer;}
+.consent .decline{background:none;color:#038A98;}
+.consent .decline:hover{background:var(--teal);color:var(--white);}
+.consent .accept{background:var(--teal);color:var(--white);border-radius:300px;
+  text-transform:capitalize;transition:opacity .1s linear;}
+.consent .accept:hover{opacity:.8;}
+.consent button:focus-visible{outline:3px solid var(--iron);outline-offset:3px;}
+
 .site-foot{color:var(--slate);font-size:clamp(14.92px,14.4px + .13vw,16.27px);padding:40px 0 56px;}
 .site-foot p{margin:0 0 8px;}
 
@@ -598,6 +630,8 @@ PAGE = """<!doctype html>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400&family=Roboto:wght@400;600;700&display=swap" rel="stylesheet">
 <style>{styles}</style>
 <script type="application/ld+json">{schema}</script>
+<script>{analytics}</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id={ga_id}"></script>
 </head>
 <body>
 <header class="top">
@@ -630,6 +664,13 @@ PAGE = """<!doctype html>
     <p><a href="https://senseandrespond.co">Sense &amp; Respond Learning</a></p>
   </div>
 </footer>
+<section class="consent" id="consent" aria-label="Cookie consent" hidden>
+  <p>Select “Accept all” to agree to our use of cookies and similar technologies for analytics. Select “Decline” to opt out.</p>
+  <div class="consent-actions">
+    <button type="button" class="decline" data-consent="denied">Decline</button>
+    <button type="button" class="accept" data-consent="granted">Accept all</button>
+  </div>
+</section>
 </body>
 </html>
 """
@@ -643,6 +684,40 @@ LEDE = ("Our training is available in person or online, live and interactive, de
         "the format that fits.")
 # The key phrase in the lede, highlighted in Key Lime as the live site does.
 LEDE_HIGHLIGHT = "you get the same training, in the format that fits"
+
+
+# Google Consent Mode v2. Everything is denied until the visitor accepts; the choice is kept in
+# localStorage and reapplied on later visits. With storage denied, gtag sends cookieless pings
+# only. This script and gtag.js are the only JavaScript besides the JSON-LD. Neither touches
+# the workshop list, which stays server-rendered (decided 2026-10-01).
+ANALYTICS_JS = """
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+(function () {
+  var KEY = "sr-consent", choice = null;
+  try { choice = localStorage.getItem(KEY); } catch (e) {}
+  function consent(v) {
+    return {ad_storage: v, ad_user_data: v, ad_personalization: v, analytics_storage: v};
+  }
+  gtag("consent", "default", consent(choice === "granted" ? "granted" : "denied"));
+  gtag("js", new Date());
+  gtag("config", "%s");
+  if (choice === "granted" || choice === "denied") return;
+  document.addEventListener("DOMContentLoaded", function () {
+    var banner = document.getElementById("consent");
+    if (!banner) return;
+    banner.hidden = false;
+    banner.addEventListener("click", function (ev) {
+      var v = ev.target.closest("[data-consent]");
+      if (!v) return;
+      v = v.getAttribute("data-consent");
+      try { localStorage.setItem(KEY, v); } catch (e) {}
+      gtag("consent", "update", consent(v));
+      banner.hidden = true;
+    });
+  });
+})();
+""" % GA_MEASUREMENT_ID
 
 
 def event_schema(e, anchor):
@@ -713,6 +788,8 @@ def render_page(events, updated, updated_iso):
                                         f"<mark>{html.escape(LEDE_HIGHLIGHT)}</mark>", 1),
         site=html.escape(SITE_URL),
         styles=STYLES,
+        analytics=ANALYTICS_JS,
+        ga_id=GA_MEASUREMENT_ID,
         schema=json_for_script(schema),
         cards=cards,
         updated=html.escape(updated),
