@@ -131,9 +131,8 @@ Also open:
   commits count, and the list changes at least as often as a workshop starts, so this should
   not bite. If the Action ever stops running, re-enable it on the Actions tab
 
-- `docs/TEAM-BRIEF.md` is a copy of `../../Web Site/Workshop ticketing mirror page/
-  workshops-page-brief.md` as of 2026-10-01 (Josh's instruction). Edit the source and copy
-  it again, rather than editing this copy. Both still list the design pass as "In progress"
+- `docs/TEAM-BRIEF.md` was deleted on 2026-10-01 (Josh): no longer needed, and a copy that
+  could drift. This brief is the record. It's in git history if needed
 
 Found on 2026-10-01:
 - The live site's body text is 1.1rem, 19.7px at desktop width, not "about 14px" as noted
