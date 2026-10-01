@@ -103,10 +103,6 @@ Also open:
   every hit to a second GA4 property, `G-6MMTGMY8G1`, and sets a Universal Analytics cookie
   (`_gat_gtag_UA_145067854_1`). This page sends only to `G-WPJMQ52FEF`. Worth knowing when
   comparing reports
-- **Ti.to source `workshops-page` (Josh).** Ti.to's docs describe saving a source on each
-  event (Event > Source Tracking) to get its link and report. Save `workshops-page` on each
-  current event and on new ones, or check with Ti.to whether orders with an unsaved
-  `?source=` are recorded anyway
 - Typo in the Ti.to banner for the OKR cohorts: "OBJECTVES & KEY RESULTS". It's in the image
   file, so it has to be fixed wherever the banners are made
 - **"Go back" button (Natalia, next pass).** A button that returns visitors to the page they
@@ -175,6 +171,20 @@ scrapped. See `docs/FINDINGS.md`.
 
 Analytics, 2026-10-01 (Josh):
 
+- **2026-10-01. Measure registrations interest with GA outbound clicks, not Ti.to sources.**
+  Saving a Ti.to source on every event is not practical: the admin creates events and can't
+  be asked to do it each time, and the Ti.to Admin API has no endpoint to create sources.
+  GA4's enhanced measurement already records each click to ti.to as a `click` event with
+  `outbound=true`, `link_domain=ti.to` and `link_url` (the event URL, so the slug says which
+  workshop). `link_classes` tells the button (`btn`) from the title and banner links. Checked
+  2026-10-01: the stream's tag has `enableOutboundClick` on and doesn't list ti.to as an own
+  domain, and a test click on the live page sent the event (`gcs=G111`). In GA:
+  Explore, event name `click`, dimensions Link URL and Link classes, filter Link domain =
+  ti.to. This counts clicks through to Ti.to, not completed purchases; Ti.to's purchase
+  events reach GA only through its checkout widget, which would mean loading Ti.to's script
+  here. The `?source=workshops-page` tags stay on the links: they cost nothing and would
+  start counting if Ti.to turns out to record unsaved sources, which its docs don't say.
+
 - **2026-10-01. Google Analytics 4, on the main site's property.** Measurement ID
   `G-WPJMQ52FEF`, the same property as senseandrespond.co, so both report in one view. The
   standard gtag.js snippet with default cookie settings (`cookie_domain` auto): the `_ga`
@@ -205,7 +215,8 @@ Analytics, 2026-10-01 (Josh):
   address. Ti.to's parameter is `source`
   (https://help.tito.io/en/articles/3846161-source-tracking). Ti.to's docs say a source is
   saved per event in the dashboard, which generates the link. Whether orders through an
-  unsaved source are still recorded is not confirmed; see "Also open".
+  unsaved source are still recorded is not confirmed. Per-event setup was ruled out the
+  same day; GA outbound clicks are the measure (see above).
 
 Design review with Natalia, 2026-10-01 (items 1 to 9):
 
