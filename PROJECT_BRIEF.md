@@ -66,6 +66,25 @@ Open, in order:
 4. Repoint the "Public Workshops" nav item on Squarespace (Natalia)
 
 Also open:
+- **Workshop images, waiting on Josh and the team (raised 2026-10-01).** Each card shows the
+  Ti.to banner, which is a full flyer (logo, campaign headline, title, region, dates, times,
+  format, badge) designed for phone width. In the card's 360px desktop column it is
+  unreadable and repeats the date band. Josh's suggestion: a trainer portrait instead, like
+  https://framerusercontent.com/images/A9slgx5mWNzOzzQ2FbF75vfnA.jpg (2:1, name, company,
+  photo). What's known:
+  - Partner workshops name the trainer in the Ti.to title ("…with Rich Visotcky", "…with
+    Daksh Gupta and Jaya Shrivastava", "…mit Simon Flossmann"). 4 of today's 14. A hand-kept
+    trainer-to-image list could be matched against the title
+  - The ten "Updated Product Training" cohorts name no trainer anywhere: not in the title,
+    and the Ti.to page says only "certified trainers" and "created by Jeff Gothelf and Josh
+    Seiden"
+  - To decide: what the cohorts show (one shared image, no image, trainers named by hand
+    per slug, or keep the banner); where portraits come from; and whether to copy them into
+    the repo or link to framerusercontent.com (a Framer edit could break links)
+  - The page works without images: cards with no banner already render as text-only
+    (`ws--plain`)
+- Typo in the Ti.to banner for the OKR cohorts: "OBJECTVES & KEY RESULTS". It's in the image
+  file, so it has to be fixed wherever the banners are made
 - Logo is a text placeholder until Natalia supplies the SVG
 - No session times are entered in Ti.to for any event. When they are, the band shows them
   (e.g. "9:00–11:00 AM CDT") instead of the time zone
