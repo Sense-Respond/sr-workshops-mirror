@@ -8,7 +8,7 @@
 2026-10-01 review. Waiting on Natalia's review, then the nav link.**
 
 The Action builds `public/` from the live API and commits it; Netlify deploys on push.
-Latest build (`491763c`, template version 5): 14 workshops, 0 collapsed. Netlify site
+Latest build (`7e6088b`, template version 6, with GA4 and consent): 14 workshops, 0 collapsed. Netlify site
 `sr-workshops.netlify.app`, HTTPS working, HTTP redirects to HTTPS. The design pass
 (`098875e`) was previewed locally at 1440 and 390px wide and approved by Josh before push.
 
@@ -71,6 +71,18 @@ Live runs, 2026-10-01:
 - 36903987959 (manual, no force): after the design pass (`098875e`). TEMPLATE_VERSION 5
   counted as a change, so it wrote and committed `491763c`; Netlify deployed it. Live checks
   above
+- 36928707371 (manual, no force): after GA4, consent and source tags (`c1b69b8`).
+  TEMPLATE_VERSION 6, so it wrote and committed `7e6088b`; Netlify deployed it. Live page
+  byte-identical to the build, `verify.py` OK, exactly three scripts, 42 tagged Ti.to links
+  (3 per workshop)
+- GA post-check, 21:27 and 21:29 UTC, headless Chrome on the live page: banner shown on a
+  first visit; a cookieless `page_view` (`gcs=G100`) before consent; after "Accept all",
+  `_ga` and `_ga_WPJMQ52FEF` cookies set on `.senseandrespond.co` (shared with the main
+  site) and hits with `gcs=G111`; after a reload, a granted `page_view`. Every hit has
+  `tid=G-WPJMQ52FEF` and `dl=https://workshops.senseandrespond.co/`. DevTools reports the
+  collect requests as `ERR_ABORTED`, but it reports the main site's working GA hits the
+  same way, so that's how it shows GA's fire-and-forget beacons. GA Realtime itself not
+  checked (no GA access): Josh to confirm
 
 Open, in order:
 1. ~~Netlify~~ Done 2026-10-01 (Josh): Netlify GitHub App installed on the `Sense-Respond`
@@ -85,6 +97,12 @@ Open, in order:
    https://workshops.senseandrespond.co (Natalia, after step 4)
 
 Also open:
+- **Confirm in GA Realtime (Josh).** Look for hostname `workshops.senseandrespond.co`; the
+  post-check visits were at 21:27 and 21:29 UTC on 2026-10-01
+- Found during the GA check: the main site (served at www.senseandrespond.co) also sends
+  every hit to a second GA4 property, `G-6MMTGMY8G1`, and sets a Universal Analytics cookie
+  (`_gat_gtag_UA_145067854_1`). This page sends only to `G-WPJMQ52FEF`. Worth knowing when
+  comparing reports
 - **Ti.to source `workshops-page` (Josh).** Ti.to's docs describe saving a source on each
   event (Event > Source Tracking) to get its link and report. Save `workshops-page` on each
   current event and on new ones, or check with Ti.to whether orders with an unsaved
