@@ -1,9 +1,9 @@
 {
   "account": "sense-respond-learning",
   "source": "api",
-  "updated": "01 Oct 2026, 12:47 UTC",
-  "updated_iso": "2026-10-01T12:47:05+00:00",
-  "template_version": 4,
+  "updated": "01 Oct 2026, 18:03 UTC",
+  "updated_iso": "2026-10-01T18:03:52+00:00",
+  "template_version": 5,
   "ticketing_url": "https://ti.to/sense-respond-learning/",
   "count": 14,
   "deduped": 0,
