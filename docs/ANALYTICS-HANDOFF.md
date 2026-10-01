@@ -1,15 +1,25 @@
 # Analytics handoff: workshops.senseandrespond.co
 
-**For:** S&R analytics
+**For:** Jeff
 **From:** Josh
 **Date:** 1 October 2026
 
 ---
 
+## Summary
+
+The workshops page reports to the same Google Analytics property as senseandrespond.co. It
+tracks visits, where they came from (including AI assistants), and every click through to a
+workshop on ti.to. It doesn't track purchases, which happen on ti.to. Jeff: please work
+through the action items below, starting with the Realtime check.
+
 ## What's set up
 
 The public workshops page at **https://workshops.senseandrespond.co** sends data to the
-**same GA4 property as senseandrespond.co**, so both appear in one view.
+**same GA4 property as senseandrespond.co**, so both appear in one view. Josh has also added
+a channel for visits from AI assistants.
+
+### Details
 
 - **Measurement ID:** `G-WPJMQ52FEF`, standard gtag.js snippet, default settings
 - **Cookies:** `_ga` and `_ga_WPJMQ52FEF` are set on `.senseandrespond.co`, the same domain
@@ -27,6 +37,11 @@ The public workshops page at **https://workshops.senseandrespond.co** sends data
   of interest in each workshop. Purchases happen on Ti.to and are **not** in GA
 - **Ti.to links** also carry `?source=workshops-page`. Not relied on: Ti.to only reports
   sources that are saved on each event, and nobody will do that per event
+- **AI assistants channel:** on 2026-10-01 Josh created a custom channel group with an "AI
+  assistants" channel: Source matches regex
+  `chatgpt|openai|perplexity|claude|anthropic|gemini|copilot`. In Reports > Acquisition >
+  Traffic acquisition, switch the primary dimension to this channel group to see visits
+  from AI assistants separately from other referrals
 
 Checked on 1 October 2026 from a test browser:
 
@@ -49,6 +64,10 @@ Reports > Realtime. Open https://workshops.senseandrespond.co in a normal browse
 "Accept all", and look for the visit. Add a comparison or filter on **Hostname =
 workshops.senseandrespond.co**. Our test visits were on 1 October 2026 at about 21:27,
 21:29 and 21:40 UTC (headless Chrome, so they may show as an unusual browser).
+
+Quick check while you're in GA: Admin > Data display > Channel groups > the custom group.
+The **AI assistants** channel must sit **above Referral**. GA evaluates channels top to
+bottom and uses the first match, so below Referral it would never receive any traffic.
 
 **2. Confirm enhanced measurement's outbound clicks stay on.**
 Admin > Data streams > the web stream for `G-WPJMQ52FEF` > Enhanced measurement. "Outbound
@@ -93,7 +112,18 @@ status on the data stream). Confirm GA shows consent signals as received for thi
 If you use behavioural modelling for consented-out visitors, this page now supplies the
 cookieless pings it needs.
 
-**8. Optional: privacy and banner wording.**
+**8. Link Search Console to this property.**
+Admin > Product links > Search Console links > Link, then choose the senseandrespond.co
+property. It's a Domain property, so it already covers workshops.senseandrespond.co. This
+brings Google search queries and impressions for the page into GA.
+
+**9. Run a monthly AI-answer check.**
+Once a month, run a fixed set of buyer questions in ChatGPT, Claude, Perplexity and Gemini,
+and record for each answer whether S&R is cited and which link it gives (this page, the main
+site, ti.to or none). Use the same questions every month so the results compare. Josh has the
+question set. GA shows the visits that result; this shows whether we're in the answers at all.
+
+**10. Optional: privacy and banner wording.**
 The banner reads: "Select “Accept all” to agree to our use of cookies and similar
 technologies for analytics. Select “Decline” to opt out." It has no privacy-policy link,
 matching the main site's banner. If you or legal want a link or different wording, tell

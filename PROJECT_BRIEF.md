@@ -6,7 +6,7 @@
 
 **2026-10-01. Live at https://workshops.senseandrespond.co with the design from the
 2026-10-01 review, GA4 behind a consent banner, and click tracking to Ti.to. Waiting on
-Natalia's review, then the nav link. Analytics tasks handed off in
+the nav and site links (design approved by the team, 2026-10-01). Analytics tasks handed off in
 `docs/ANALYTICS-HANDOFF.md`.**
 
 The Action builds `public/` from the live API and commits it; Netlify deploys on push.
@@ -98,16 +98,19 @@ Open, in order:
    `sr-workshops.netlify.app`, created at iwantmyname (where the senseandrespond.co
    nameservers are). Netlify verified it and issued the HTTPS certificate
 3. ~~Verify live~~ Done 2026-10-01: `verify.py` OK against the live URL (see above)
-4. Natalia reviews the 2026-10-01 design on the live page
-5. Repoint the "Public Workshops" nav item on Squarespace to
-   https://workshops.senseandrespond.co (Natalia, after step 4)
+4. ~~Design review~~ Done 2026-10-01: the live design was approved by the team
+5. Nav and site links: repoint the "Public Workshops" nav item on Squarespace, and other
+   links on senseandrespond.co that go to ti.to's timeline, to
+   https://workshops.senseandrespond.co (Natalia)
 
 Also open:
-- **Analytics (Josh's analytics person).** Eight tasks in `docs/ANALYTICS-HANDOFF.md`:
-  confirm the page in Realtime; keep outbound clicks on; make clicks to ti.to a key event;
-  build a per-workshop report; watch for senseandrespond.co as a referral; decide about the
-  main site's second GA4 property (`G-6MMTGMY8G1`) and leftover Universal Analytics tag;
-  check consent signals; optionally, banner wording and a privacy link
+- **Analytics (Jeff).** Ten tasks in `docs/ANALYTICS-HANDOFF.md`: confirm the page in
+  Realtime and that the "AI assistants" channel sits above Referral; keep outbound clicks on;
+  make clicks to ti.to a key event; build a per-workshop report; watch for
+  senseandrespond.co as a referral; decide about the main site's second GA4 property
+  (`G-6MMTGMY8G1`) and leftover Universal Analytics tag; check consent signals; link Search
+  Console; a monthly AI-answer check (Josh has the questions); optionally, banner wording
+  and a privacy link
 - Typo in the Ti.to banner for the OKR cohorts: "OBJECTVES & KEY RESULTS". It's in the image
   file, so it has to be fixed wherever the banners are made
 - **"Go back" button (Natalia, next pass).** A button that returns visitors to the page they
@@ -180,6 +183,10 @@ scrapped. See `docs/FINDINGS.md`.
 
 Analytics, 2026-10-01 (Josh):
 
+- **2026-10-01. AI assistants channel (Josh).** A custom channel group in GA with an "AI
+  assistants" channel (Source matches regex
+  `chatgpt|openai|perplexity|claude|anthropic|gemini|copilot`), for Goal 2: seeing visits
+  from AI assistants in Traffic acquisition
 - **2026-10-01. Measure click-throughs to Ti.to with GA outbound clicks, not Ti.to sources.**
   Saving a Ti.to source on every event is not practical: the admin creates events and can't
   be asked to do it each time, and the Ti.to Admin API has no endpoint to create sources.
