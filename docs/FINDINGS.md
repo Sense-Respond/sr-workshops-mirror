@@ -199,6 +199,43 @@ change, not a new nav item.
 Current nav: Home, For Product Teams, For Individuals, Certifications, Public Workshops,
 Who We Are, Who We Serve, Resource Hub, Books, Blog, Contact.
 
+## 8. Google Analytics on senseandrespond.co
+
+Checked 1 October 2026 in headless Chrome and from the tag Google serves
+(`googletagmanager.com/gtag/js?id=G-WPJMQ52FEF`).
+
+- The main site is served at **www.senseandrespond.co** and sends every hit to two GA4
+  properties: `G-WPJMQ52FEF` and `G-6MMTGMY8G1`. It also loads a Google Ads tag
+  (`AW-18321099953`) and sets a Universal Analytics cookie, `_gat_gtag_UA_145067854_1`
+- Its `_ga` cookies are on `.senseandrespond.co`, so the workshops subdomain, with default
+  gtag settings, shares the same client ID
+- It uses Consent Mode (Squarespace's banner); its hits carry `gcs` values
+- The `G-WPJMQ52FEF` web stream has enhanced measurement on: page views, scroll, outbound
+  clicks, downloads, forms, video, history events. No own domains are listed, so clicks to
+  ti.to count as outbound
+- Chrome DevTools shows GA's `/g/collect` requests as `ERR_ABORTED` on both sites. That's
+  how it shows these fire-and-forget beacons, not a failure
+
+**verify again** if GA settings change.
+
+## 9. Ti.to Source Tracking
+
+Checked 1 October 2026 (https://help.tito.io/en/articles/3846161-source-tracking,
+https://ti.to/docs/api/admin/3.0):
+
+- The parameter is `?source=`. Sources are saved per event, in the event dashboard under
+  Source Tracking, which generates the link and the report
+- The Admin API has **no endpoint to create or list sources**. Registrations do expose a
+  `source` field ("The Source Tracking code that the person registered under")
+- The docs don't say whether an order made through an **unsaved** source is recorded. Not
+  tested. A one-time test would settle it: a free test event, a registration through
+  `?source=test` without saving the source, then check the registration
+- Ti.to's own GA integration sends only `begin_checkout` and `purchase`, and only through
+  its checkout widget on your own site (https://help.tito.io/en/articles/2006249-google-analytics)
+
+Consequence: per-event setup is not practical (the admin creates events), so the page
+measures interest with GA outbound clicks instead. See `PROJECT_BRIEF.md`.
+
 ---
 
 ## Dead ends: do not revisit

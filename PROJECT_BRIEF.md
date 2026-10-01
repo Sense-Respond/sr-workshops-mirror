@@ -5,7 +5,9 @@
 ## Current State
 
 **2026-10-01. Live at https://workshops.senseandrespond.co with the design from the
-2026-10-01 review. Waiting on Natalia's review, then the nav link.**
+2026-10-01 review, GA4 behind a consent banner, and click tracking to Ti.to. Waiting on
+Natalia's review, then the nav link. Analytics tasks handed off in
+`docs/ANALYTICS-HANDOFF.md`.**
 
 The Action builds `public/` from the live API and commits it; Netlify deploys on push.
 Latest build (`7e6088b`, template version 6, with GA4 and consent): 14 workshops, 0 collapsed. Netlify site
@@ -16,8 +18,9 @@ Live checks, 2026-10-01 18:05 UTC, after the design pass:
 - `python3 verify.py https://workshops.senseandrespond.co`: OK. 14 titles in the raw HTML
   match `workshops.json`, 14 JSON-LD `Event`s, 27 `<time>` elements
 - Fetched with the GPTBot user agent: all 14 workshop titles in the raw HTML
-- Live `index.html` is byte-identical to `public/index.html` at `491763c`. No gradient band;
-  back link "← Back to senseandrespond.co" to /individuals
+- Live `index.html` was byte-identical to `public/index.html` at `491763c`, and again at
+  `7e6088b` after the analytics deploy. No gradient band; back link "← Back to
+  senseandrespond.co" to /individuals
 - `assets/sr-logo.svg`, `assets/sr-logomark.svg`, `assets/hero-gradient.jpg` all 200 with the
   right content types. All 14 banners 200 (checked 12:47 UTC)
 - Earlier, 12:38 UTC: `robots.txt`, `sitemap.xml`, `llms.txt`, `workshops.json` all 200,
@@ -82,7 +85,10 @@ Live runs, 2026-10-01:
   `tid=G-WPJMQ52FEF` and `dl=https://workshops.senseandrespond.co/`. DevTools reports the
   collect requests as `ERR_ABORTED`, but it reports the main site's working GA hits the
   same way, so that's how it shows GA's fire-and-forget beacons. GA Realtime itself not
-  checked (no GA access): Josh to confirm
+  checked (no GA access): handed off, see `docs/ANALYTICS-HANDOFF.md`
+- Outbound click check, about 21:40 UTC: a click on the first Register button sent a GA
+  `click` event with `outbound=true`, `link_domain=ti.to`, `link_url` (the event URL) and
+  `link_classes=btn`, `gcs=G111`
 
 Open, in order:
 1. ~~Netlify~~ Done 2026-10-01 (Josh): Netlify GitHub App installed on the `Sense-Respond`
@@ -97,12 +103,11 @@ Open, in order:
    https://workshops.senseandrespond.co (Natalia, after step 4)
 
 Also open:
-- **Confirm in GA Realtime (Josh).** Look for hostname `workshops.senseandrespond.co`; the
-  post-check visits were at 21:27 and 21:29 UTC on 2026-10-01
-- Found during the GA check: the main site (served at www.senseandrespond.co) also sends
-  every hit to a second GA4 property, `G-6MMTGMY8G1`, and sets a Universal Analytics cookie
-  (`_gat_gtag_UA_145067854_1`). This page sends only to `G-WPJMQ52FEF`. Worth knowing when
-  comparing reports
+- **Analytics (Josh's analytics person).** Eight tasks in `docs/ANALYTICS-HANDOFF.md`:
+  confirm the page in Realtime; keep outbound clicks on; make clicks to ti.to a key event;
+  build a per-workshop report; watch for senseandrespond.co as a referral; decide about the
+  main site's second GA4 property (`G-6MMTGMY8G1`) and leftover Universal Analytics tag;
+  check consent signals; optionally, banner wording and a privacy link
 - Typo in the Ti.to banner for the OKR cohorts: "OBJECTVES & KEY RESULTS". It's in the image
   file, so it has to be fixed wherever the banners are made
 - **"Go back" button (Natalia, next pass).** A button that returns visitors to the page they
@@ -132,6 +137,10 @@ Found on 2026-10-01:
   in September. Measured values are in `docs/BRAND-SPEC.md`
 - Ti.to v3 returns doubled `banner_url`s (fixed in `build.py`)
 - Scheduled runs can start hours late (the first ran at 17:16 UTC for an 11:00 slot)
+- The Ti.to Admin API can't create Source Tracking sources, and Ti.to's docs don't say
+  whether an unsaved `?source=` is recorded (`docs/FINDINGS.md` section 9)
+- GA: the stream has outbound clicks on; the main site also reports to a second property
+  (`docs/FINDINGS.md` section 8)
 
 Found on 2026-09-30:
 - The ti.to public timeline no longer server-renders its events (`docs/FINDINGS.md`

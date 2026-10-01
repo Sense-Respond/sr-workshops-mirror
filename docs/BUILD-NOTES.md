@@ -10,6 +10,7 @@
 | `.github/workflows/build.yml` | Daily build at 11:00 UTC: test, build, verify, commit `public/` if changed |
 | `netlify.toml` | Publish `public/`, no build command, skip deploys that don't touch `public/` |
 | `public/assets/` | Logo, logomark (favicon) and hero image from Natalia. Committed by hand, not generated. `build.py` writes next to them and never deletes them. When building elsewhere with `OUT_DIR`, copy this folder in to see the images |
+| `docs/ANALYTICS-HANDOFF.md` | What's set up in GA4 and the tasks for the analytics person |
 | `docs/reference/` | Screenshots of the live site and ti.to that set the overall look (2026-10-01 review). Exact values are in `docs/BRAND-SPEC.md` |
 | `docs/sample-workshops.json` | Real snapshot of 15 workshops, 18 September 2026. Use it to develop and test the renderer without hitting the API |
 | `docs/DEPRECATED-squarespace-code-block.html` | Do not ship. Kept as a record of the wrong approach. See `docs/FINDINGS.md`, dead end 1 |
@@ -79,6 +80,13 @@ links only.
 To test locally without sending hits to the real property, block
 `*google-analytics.com/g/collect*` in the browser (DevTools > Network request blocking).
 Otherwise a local visit shows up in GA with hostname `127.0.0.1`.
+
+Clicks to Ti.to are measured by GA4's enhanced measurement (outbound clicks), not by any code
+here. Keep event links as plain `<a href>` to ti.to: that's what the outbound-click listener
+picks up. The `?source=` tag is not relied on (see `PROJECT_BRIEF.md`).
+
+Tests cover the script rule (exactly the JSON-LD, the inline consent script and gtag.js;
+the inline script carries no workshop data), consent defaults, and the source tags.
 
 ## Environment variables
 

@@ -2,13 +2,13 @@
 
 **For:** Jeff, Natalia
 **From:** Josh
-**Date:** 18 September 2026, updated 1 October 2026 (after design review with Natalia)
+**Date:** 18 September 2026, updated 1 October 2026 (after design review with Natalia, and analytics)
 
 ---
 
 ## Where it stands
 
-The page is live at **workshops.senseandrespond.co**. A script pulls our workshops from ti.to every day and publishes the page. We tested it the way an AI crawler sees it, with no JavaScript, and every workshop is there. After the design review on 1 October, a second design pass is under way. Natalia will repoint the nav once she has approved it.
+The page is live at **workshops.senseandrespond.co**. A script pulls our workshops from ti.to every day and publishes the page. We tested it the way an AI crawler sees it, with no JavaScript, and every workshop is there. The design pass from the 1 October review is live. Natalia will repoint the nav once she has approved it. The page now also reports to Google Analytics.
 
 ## Goals
 
@@ -56,6 +56,12 @@ Design follows the live senseandrespond.co site, so the page looks like the rest
 - **Date, time and place** sit in dark gray text on white, lighter than the title. No gradient band, because our courses use different gradients
 - Natalia supplied the corrected logo and the background image
 
+## Analytics
+
+The page reports to the same Google Analytics property as senseandrespond.co, so both show up in one view, and visitors' sessions carry across. It asks for cookie consent first, with a banner like the one on our main site. GA counts every click from the page to a workshop on ti.to, so we can see which workshops draw interest and where those visitors came from. Purchases happen on ti.to and don't show in GA.
+
+The setup tasks inside GA are listed in `docs/ANALYTICS-HANDOFF.md` in the project repo, for our analytics person.
+
 ## Still open
 
 **1. A way back to the main site. (Natalia, Josh)**
@@ -70,11 +76,13 @@ A subdomain is weaker than our main domain for Google. The fix is a short evergr
 |---|---|---|---|
 | 1 | Build the page and the daily update | Josh | Done |
 | 2 | Put it live at workshops.senseandrespond.co | Josh | Done |
-| 3 | Design pass from the 1 October review | Josh | In progress |
+| 3 | Design pass from the 1 October review | Josh | Done |
 | 4 | Review the new version | Natalia | After step 3 |
 | 5 | Repoint the "Public Workshops" nav item | Natalia | After step 4 |
 | 6 | Update the brand guide to match the live site | Natalia | Open |
 | 7 | Decide where the evergreen /workshops copy belongs | Jeff | Open |
 | 8 | Add the region to the cohort titles in ti.to, and set their time zones | Josh | Open |
+| 9 | Google Analytics on the page, with cookie consent | Josh | Done |
+| 10 | GA setup: key event for clicks to ti.to, workshops report | Analytics | Open |
 
 Every daily update re-checks that each workshop title is readable with JavaScript switched off.

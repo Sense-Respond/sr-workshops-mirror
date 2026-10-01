@@ -62,6 +62,13 @@ typed in capitals.
 **Header.** About 108px tall at 1440px. Logo 156x50px, left, at the 4vw gutter. Nav Roboto
 400 0.9rem, black. Then a hero with a gradient background image.
 
+**Cookie banner** (Squarespace's, measured for the page's own banner): fixed to the bottom,
+full width, background Chalk `#F9FAF0`, padding 14px 20px, text and buttons spread apart.
+Text Roboto 400, 14.5px (13.8px on phones), line height 1.6, black. Buttons Roboto 600
+12px, padding 11px 15px: "Manage cookies" as a text button in `#038A98`, "Accept all" as a
+Deep Teal pill, capitalized. On phones the buttons drop below the text. The page uses the
+same styles with "Decline" in place of "Manage cookies".
+
 **Layout.** Site max width 1400px. Gutter 4vw, 6vw on phones (under 768px).
 
 **Not in the CSS.** The rounded cards on the live pages are Squarespace shape blocks, drawn as
