@@ -118,6 +118,14 @@ class Page(unittest.TestCase):
         page = self.render([ev("a")])
         self.assertIn('<section class="consent" id="consent" aria-label="Cookie consent" hidden>', page)
 
+    def test_accept_resends_page_view(self):
+        # First visits keep their traffic source: the pre-consent page view is cookieless and
+        # unreported, so "Accept all" sends one again (2026-10-06).
+        js = build.ANALYTICS_JS
+        line = 'if (v === "granted") gtag("event", "page_view");'
+        self.assertIn(line, js)
+        self.assertLess(js.index('gtag("consent", "update"'), js.index(line))
+
     def test_links_to_tito_carry_source(self):
         e = ev("okr", banner="https://example.com/b.png")
         page = self.render([e])

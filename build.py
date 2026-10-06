@@ -51,7 +51,7 @@ SITE_URL = (os.environ.get("SITE_URL", "").strip()
             or "https://workshops.senseandrespond.co").rstrip("/")
 
 # Bump whenever the rendered output changes, so the no-change guard lets the new design ship.
-TEMPLATE_VERSION = 6
+TEMPLATE_VERSION = 7
 
 TIMELINE_URL = f"https://ti.to/{ACCOUNT}/"
 API_BASE = f"https://api.tito.io/v3/{ACCOUNT}"
@@ -690,6 +690,9 @@ LEDE_HIGHLIGHT = "you get the same training, in the format that fits"
 # localStorage and reapplied on later visits. With storage denied, gtag sends cookieless pings
 # only. This script and gtag.js are the only JavaScript besides the JSON-LD. Neither touches
 # the workshop list, which stays server-rendered (decided 2026-10-01).
+# On "Accept all" the page view is sent again: the first one went out cookieless and GA
+# doesn't report it, so a first visit would otherwise lose its traffic source (Jeff,
+# 2026-10-06). No double count, since the cookieless one isn't reported.
 ANALYTICS_JS = """
 window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
@@ -713,6 +716,7 @@ function gtag(){dataLayer.push(arguments);}
       v = v.getAttribute("data-consent");
       try { localStorage.setItem(KEY, v); } catch (e) {}
       gtag("consent", "update", consent(v));
+      if (v === "granted") gtag("event", "page_view");
       banner.hidden = true;
     });
   });
