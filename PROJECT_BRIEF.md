@@ -1,15 +1,35 @@
 # Public Workshops Mirror — Project Brief
 
-**Last updated:** 2026-10-01
+**Last updated:** 2026-10-06
 
 ## Current State
 
-**2026-10-01. Live at https://workshops.senseandrespond.co with the design from the
-2026-10-01 review, GA4 behind a consent banner, and click tracking to Ti.to. Waiting on
-the nav and site links (design approved by the team, 2026-10-01). Analytics tasks handed off in
-`docs/ANALYTICS-HANDOFF.md`.**
+**2026-10-06. Live at https://workshops.senseandrespond.co with the design from the
+2026-10-01 review, GA4 behind a consent banner, and click tracking to Ti.to. Jeff worked
+through the analytics handoff on 2026-10-06 (results below). "Accept all" now re-sends the
+page view so first visits keep their traffic source (template version 7), waiting on Josh's
+Realtime check. Still waiting on the nav and site links.**
 
 The Action builds `public/` from the live API and commits it; Netlify deploys on push.
+
+Analytics, 2026-10-06 (Jeff's report, "2026 Oct 6 status update and next Steps.md" in the
+Cowork folder; status per item in `docs/ANALYTICS-HANDOFF.md`):
+- Done: Realtime shows page views, `click` and `tito_click` for this hostname; the "AI
+  assistants" channel sits above Referral; outbound clicks on, no change; no self-referral
+  from senseandrespond.co; GA consent settings say "Your setup is good"
+- `tito_click` existed as a key event with the wrong trigger (`event_name = page_view` and
+  `page_location` contains ti.to, which can never fire, since GA doesn't run on ti.to). Jeff
+  changed it to `event_name = click` and `link_domain = ti.to`, copying parameters so
+  `link_url` carries over. Confirmed in Realtime
+- Workshops report built in Explore: "Workshops – Ti.to clicks" (private to Jeff)
+- Found: first visits lost their traffic source. Fixed in `build.py`, see Decisions
+- `G-6MMTGMY8G1` isn't on the main site's page itself: it's loaded through the old Universal
+  Analytics tag (`UA-145067854-1`) in Squarespace's Google Analytics field
+
+Live checks, 2026-10-06 18:20 UTC, after the first-visit fix (`6462598`, Action run
+37510471939, build commit `bd71859`): live `index.html` byte-identical to `public/index.html`;
+the new line is in it; exactly three scripts; `verify.py` OK against the live URL, 12 titles
+(two workshops have started since the 2026-10-01 count).
 Latest build (`7e6088b`, template version 6, with GA4 and consent): 14 workshops, 0 collapsed. Netlify site
 `sr-workshops.netlify.app`, HTTPS working, HTTP redirects to HTTPS. The design pass
 (`098875e`) was previewed locally at 1440 and 390px wide and approved by Josh before push.
@@ -42,7 +62,7 @@ Done:
   Deep Teal pill buttons, one workshop per row. Assets committed in `public/assets/`
 - `main()` guards per the decisions below. `--from-json` and `--force`
 - `verify.py` checks what a non-JS crawler sees. Takes a directory or the live URL
-- `tests/`: 67 stdlib `unittest` tests. Run with `python3 -m unittest discover tests`
+- `tests/`: 68 stdlib `unittest` tests. Run with `python3 -m unittest discover tests`
 - `.github/workflows/build.yml`: daily at 11:00 UTC, plus a manual run with an optional
   "force" box. Tests, token check, build, verify, commit `public/` only if it changed
 - `netlify.toml`: publishes `public/`, no build command, skips deploys that don't touch
@@ -102,15 +122,27 @@ Open, in order:
 5. Nav and site links: repoint the "Public Workshops" nav item on Squarespace, and other
    links on senseandrespond.co that go to ti.to's timeline, to
    https://workshops.senseandrespond.co (Natalia)
+6. Realtime check of the first-visit fix (Josh): private window,
+   https://workshops.senseandrespond.co/?utm_source=test, "Accept all", look for a
+   `page_view` with source "test"
 
 Also open:
-- **Analytics (Jeff).** Ten tasks in `docs/ANALYTICS-HANDOFF.md`: confirm the page in
-  Realtime and that the "AI assistants" channel sits above Referral; keep outbound clicks on;
-  make clicks to ti.to a key event; build a per-workshop report; watch for
-  senseandrespond.co as a referral; decide about the main site's second GA4 property
-  (`G-6MMTGMY8G1`) and leftover Universal Analytics tag; check consent signals; link Search
-  Console; a monthly AI-answer check (Josh has the questions); optionally, banner wording
-  and a privacy link
+- **Analytics, Josh's items (from Jeff, 2026-10-06).**
+  - Add Jeff as an Owner of the senseandrespond.co Search Console property (Settings → Users
+    and permissions), so he can link it in GA. Or link it yourself
+  - Remove `UA-145067854-1` from Squarespace's Google Analytics field, leaving
+    `G-WPJMQ52FEF`. That also stops data to `G-6MMTGMY8G1`; check first that nobody uses it.
+    A Squarespace task (Josh/Natalia), not this repo
+  - Send Jeff the AI-answer question set (`ai-answer-check.md` in the Cowork folder) for the
+    monthly check
+- **Analytics, still open with Jeff.** Item 10, banner wording and a privacy link: optional,
+  Jeff and legal to decide
+- **Out of scope here: ad consent on the main site.** The Google Ads tag
+  (`AW-18321099953`) in Squarespace Code Injection sets no consent default, so it can set ad
+  cookies and send `user_data` before anyone accepts. S&R is a US company (New York), but EU
+  rules and Google's EU consent policy apply to EU visitors. Jeff's report has a suggested
+  consent-default snippet. A Squarespace task, not this repo. This page already sets all
+  four consent types
 - Typo in the Ti.to banner for the OKR cohorts: "OBJECTVES & KEY RESULTS". It's in the image
   file, so it has to be fixed wherever the banners are made
 - **"Go back" button (Natalia, next pass).** A button that returns visitors to the page they
@@ -179,6 +211,18 @@ scrapped. See `docs/FINDINGS.md`.
   inline consent script, and no others. See Decisions
 
 ## Decisions Made
+
+Analytics, 2026-10-06:
+
+- **2026-10-06. Re-send the page view on "Accept all".** In the consent script's click
+  handler, right after `gtag("consent", "update", consent(v))`:
+  `if (v === "granted") gtag("event", "page_view");`. Reason (Jeff's finding, 2026-10-06): a
+  first visit's page view goes out before consent as a cookieless ping, which GA doesn't
+  report, and "Accept all" only updated consent, so nothing new was sent. A first visit's
+  `tito_click` arrived with no source. No double count, since the cookieless page view isn't
+  reported. Returning visitors are unaffected: their stored choice is the consent default
+  before `config`, and the banner script returns early. Decline sends nothing. Still exactly
+  three scripts. Template version 7.
 
 Analytics, 2026-10-01 (Josh):
 

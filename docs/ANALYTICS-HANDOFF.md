@@ -3,8 +3,31 @@
 **For:** Jeff
 **From:** Josh
 **Date:** 1 October 2026
+**Status updated:** 6 October 2026
 
 ---
+
+## Status, 6 October 2026
+
+Jeff worked through the list on 6 October 2026 (his report: "2026 Oct 6 status update and
+next Steps.md"). Items 1, 2, 4, 5 and 7 are done; item 3 is fixed; items 6 and 8 are with
+Josh; 9 and 10 are open. Jeff also found that first visits lost their traffic source; the
+page fix is live and waiting on Josh's Realtime check (see "First-visit traffic source" at
+the end of the action items).
+
+| Item | Status | Owner |
+|---|---|---|
+| 1. Realtime check, AI assistants channel order | Done | — |
+| 2. Outbound clicks | Done, no change | — |
+| 3. `tito_click` key event | Fixed: wrong trigger | — |
+| 4. Workshops report | Done, in Explore | — |
+| 5. Main site as referral | Done, not happening | — |
+| 6. Extra tags | Remove the UA ID in Squarespace | Josh |
+| 7. Consent settings | Done, "Your setup is good" | — |
+| 8. Search Console link | Add Jeff as Owner | Josh |
+| 9. Monthly AI-answer check | Open: question set | Josh → Jeff |
+| 10. Banner wording | Open, optional | Jeff / legal |
+| First-visit traffic source | Live; Realtime check pending | Josh |
 
 ## Summary
 
@@ -59,7 +82,8 @@ Not checked: anything inside the GA interface. That's the list below.
 
 In priority order.
 
-**1. Confirm the page appears in Realtime.**
+**1. Confirm the page appears in Realtime.** *Done 2026-10-06 (Jeff): page views, `click`
+and `tito_click` arrive; "AI assistants" is at position 15, Referral at 17.*
 Reports > Realtime. Open https://workshops.senseandrespond.co in a normal browser, click
 "Accept all", and look for the visit. Add a comparison or filter on **Hostname =
 workshops.senseandrespond.co**. Our test visits were on 1 October 2026 at about 21:27,
@@ -69,12 +93,17 @@ Quick check while you're in GA: Admin > Data display > Channel groups > the cust
 The **AI assistants** channel must sit **above Referral**. GA evaluates channels top to
 bottom and uses the first match, so below Referral it would never receive any traffic.
 
-**2. Confirm enhanced measurement's outbound clicks stay on.**
+**2. Confirm enhanced measurement's outbound clicks stay on.** *Done 2026-10-06 (Jeff): on,
+no ti.to domain configured, no change.*
 Admin > Data streams > the web stream for `G-WPJMQ52FEF` > Enhanced measurement. "Outbound
 clicks" must be on. Turning it off stops the workshop click data. Don't add ti.to under
 "Configure your domains": that would make clicks to it stop counting as outbound.
 
-**3. Make clicks to Ti.to a key event.**
+**3. Make clicks to Ti.to a key event.** *Fixed 2026-10-06 (Jeff): `tito_click` already
+existed as a key event, but triggered on `event_name = page_view` and `page_location`
+contains ti.to, which can never fire, because GA doesn't run on ti.to. Now `event_name =
+click` and `link_domain` equals ti.to (case-insensitive), with "Copy parameters from the
+source event" ticked so `link_url` carries over. Confirmed in Realtime.*
 So they show up as conversions in standard reports:
 - Admin > Events > Create event. Name it e.g. `tito_click`. Conditions:
   `event_name equals click` and `link_domain equals ti.to`
@@ -83,7 +112,8 @@ So they show up as conversions in standard reports:
   (Admin > Custom definitions) if they're not already available in your reports. In
   Explorations, "Link URL" and "Link domain" are built-in dimensions
 
-**4. Build a workshops report.**
+**4. Build a workshops report.** *Done 2026-10-06 (Jeff): Explore → "Workshops – Ti.to
+clicks", private to Jeff. Tabs "By workshop" and "Traffic by site".*
 An Exploration (free form) with:
 - Rows: Link URL (one row per workshop), optionally Link classes
 - Values: Event count, Total users
@@ -91,14 +121,18 @@ An Exploration (free form) with:
 - Optionally break down by Session source / medium to see where interested visitors came
   from (search, the main site, AI assistants, email)
 
-**5. Check the main site isn't showing up as a referral.**
+**5. Check the main site isn't showing up as a referral.** *Done 2026-10-06 (Jeff): not
+happening, no change.*
 Visitors arrive from www.senseandrespond.co (the "Public Workshops" nav item, once it's
 repointed). Because both sites share cookies, the session should carry on. If
 `senseandrespond.co` starts appearing as a referral source for this hostname, add it under
 Admin > Data streams > Configure tag settings > **List unwanted referrals** (referral domain
 contains `senseandrespond.co`).
 
-**6. Decide about the main site's extra tags.**
+**6. Decide about the main site's extra tags.** *Josh's (Squarespace). Jeff found
+`G-6MMTGMY8G1` is loaded through the UA tag `UA-145067854-1` in Squarespace's Google
+Analytics field. Remove the UA ID there, leaving `G-WPJMQ52FEF`; that also stops data to
+`G-6MMTGMY8G1`, so check nobody uses it first. Not a repo task.*
 Found while testing: the main site also sends every hit to a second GA4 property,
 `G-6MMTGMY8G1`, and sets a Universal Analytics cookie (`_gat_gtag_UA_145067854_1`;
 Google stopped processing Universal Analytics data in 2023 and 2024). The workshops page sends only to
@@ -106,28 +140,37 @@ Google stopped processing Universal Analytics data in 2023 and 2024). The worksh
 whether `G-6MMTGMY8G1` is intended, and remove the UA tag from Squarespace if it's left
 over.
 
-**7. Check consent settings in GA.**
+**7. Check consent settings in GA.** *Done 2026-10-06 (Jeff): "Your setup is good".
+Analytics consent signals active.*
 Admin > Data collection and modification > consent settings (or the "Consent settings"
 status on the data stream). Confirm GA shows consent signals as received for this stream.
 If you use behavioural modelling for consented-out visitors, this page now supplies the
 cookieless pings it needs.
 
-**8. Link Search Console to this property.**
+**8. Link Search Console to this property.** *Josh's. Blocked: Jeff isn't a verified owner
+of the Search Console property. Josh to add Jeff as an Owner (Search Console → Settings →
+Users and permissions), or link it himself.*
 Admin > Product links > Search Console links > Link, then choose the senseandrespond.co
 property. It's a Domain property, so it already covers workshops.senseandrespond.co. This
 brings Google search queries and impressions for the page into GA.
 
-**9. Run a monthly AI-answer check.**
+**9. Run a monthly AI-answer check.** *Open: Josh is sending Jeff the question set.*
 Once a month, run a fixed set of buyer questions in ChatGPT, Claude, Perplexity and Gemini,
 and record for each answer whether S&R is cited and which link it gives (this page, the main
 site, ti.to or none). Use the same questions every month so the results compare. Josh has the
 question set. GA shows the visits that result; this shows whether we're in the answers at all.
 
-**10. Optional: privacy and banner wording.**
+**10. Optional: privacy and banner wording.** *Open, optional.*
 The banner reads: "Select “Accept all” to agree to our use of cookies and similar
 technologies for analytics. Select “Decline” to opt out." It has no privacy-policy link,
 matching the main site's banner. If you or legal want a link or different wording, tell
 Josh; it's a one-line change in `build.py`.
+
+**First-visit traffic source (found by Jeff, 2026-10-06).** A first visit's page view went
+out before consent as a cookieless ping, which GA doesn't report, and "Accept all" only
+updated consent, so the visit and its clicks had no source. Fixed in `build.py`: "Accept all"
+now sends `gtag("event", "page_view")` right after the consent update. Live since 6 October
+2026 (template version 7). *Realtime check pending (Josh).*
 
 ## Who to ask
 
