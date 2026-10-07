@@ -3,7 +3,7 @@
 **For:** Jeff
 **From:** Josh
 **Date:** 1 October 2026
-**Status updated:** 6 October 2026
+**Status updated:** 7 October 2026
 
 ---
 
@@ -12,7 +12,7 @@
 Jeff worked through the list on 6 October 2026 (his report: "2026 Oct 6 status update and
 next Steps.md"). Items 1, 2, 4, 5 and 7 are done; item 3 is fixed; items 6 and 8 are with
 Josh; 9 and 10 are open. Jeff also found that first visits lost their traffic source; the
-page fix is live and waiting on Josh's Realtime check (see "First-visit traffic source" at
+page fix is live and confirmed in Realtime on 7 October 2026 (see "First-visit traffic source" at
 the end of the action items).
 
 | Item | Status | Owner |
@@ -27,7 +27,7 @@ the end of the action items).
 | 8. Search Console link | Add Jeff as Owner | Josh |
 | 9. Monthly AI-answer check | Open: question set | Josh → Jeff |
 | 10. Banner wording | Open, optional | Jeff / legal |
-| First-visit traffic source | Live; Realtime check pending | Josh |
+| First-visit traffic source | Done: fixed, confirmed in Realtime | — |
 
 ## Summary
 
@@ -170,7 +170,9 @@ Josh; it's a one-line change in `build.py`.
 out before consent as a cookieless ping, which GA doesn't report, and "Accept all" only
 updated consent, so the visit and its clicks had no source. Fixed in `build.py`: "Accept all"
 now sends `gtag("event", "page_view")` right after the consent update. Live since 6 October
-2026 (template version 7). *Realtime check pending (Josh).*
+2026 (template version 7). *Done: confirmed by Josh in Realtime on 7 October 2026. A
+private window on `?utm_source=test`, then "Accept all", showed a `page_view` with source
+"test".*
 
 ## Who to ask
 

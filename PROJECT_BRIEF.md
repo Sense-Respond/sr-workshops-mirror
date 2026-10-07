@@ -1,14 +1,14 @@
 # Public Workshops Mirror — Project Brief
 
-**Last updated:** 2026-10-06
+**Last updated:** 2026-10-07
 
 ## Current State
 
 **2026-10-06. Live at https://workshops.senseandrespond.co with the design from the
 2026-10-01 review, GA4 behind a consent banner, and click tracking to Ti.to. Jeff worked
 through the analytics handoff on 2026-10-06 (results below). "Accept all" now re-sends the
-page view so first visits keep their traffic source (template version 7), waiting on Josh's
-Realtime check. Still waiting on the nav and site links.**
+page view so first visits keep their traffic source (template version 7), confirmed by
+Josh in GA Realtime on 2026-10-07. Still waiting on the nav and site links.**
 
 The Action builds `public/` from the live API and commits it; Netlify deploys on push.
 
@@ -122,9 +122,9 @@ Open, in order:
 5. Nav and site links: repoint the "Public Workshops" nav item on Squarespace, and other
    links on senseandrespond.co that go to ti.to's timeline, to
    https://workshops.senseandrespond.co (Natalia)
-6. Realtime check of the first-visit fix (Josh): private window,
-   https://workshops.senseandrespond.co/?utm_source=test, "Accept all", look for a
-   `page_view` with source "test"
+6. ~~Realtime check of the first-visit fix~~ Done 2026-10-07 (Josh): private window,
+   https://workshops.senseandrespond.co/?utm_source=test, "Accept all"; a `page_view` with
+   source "test" appeared in Realtime
 
 Also open:
 - **Analytics, Josh's items (from Jeff, 2026-10-06).**
