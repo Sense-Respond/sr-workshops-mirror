@@ -2,11 +2,10 @@
 
 > Upcoming workshops from Sense & Respond Learning: live training in Product Management, Lean UX, Product Discovery, OKRs, Outcomes, and Storytelling. Open to individuals. Tickets are sold through Ti.to.
 
-This list was last updated 06 Oct 2026, 18:20 UTC. The full page is at https://workshops.senseandrespond.co/ and the same data is at https://workshops.senseandrespond.co/workshops.json.
+This list was last updated 10 Oct 2026, 16:06 UTC. The full page is at https://workshops.senseandrespond.co/ and the same data is at https://workshops.senseandrespond.co/workshops.json.
 
 ## Upcoming workshops
 
-- [Objectives & Key Results - Live Online Workshop with Daksh Gupta and Jaya Shrivastava](https://workshops.senseandrespond.co/#okrs-daksh-jaya-october-2026): October 10th–11th, 2026. Time zone: IST (New Delhi). Live online. From ₹1,400. Register at https://ti.to/sense-respond-learning/okrs-daksh-jaya-october-2026
 - [Lean Product Management](https://workshops.senseandrespond.co/#updated-product-training-for-2027-lpm-1): October 13th–27th, 2026. Americas & Europe. Live online. From $500. Register at https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpm-1
 - [Lean Product Management](https://workshops.senseandrespond.co/#updated-product-training-for-2027-lpm-2): October 13th–27th, 2026. Asia-Pacific, Middle East & Africa. Live online. From $500. Register at https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpm-2
 - [Objectives & Key Results - Who Does What by How Much? - Live Online Workshop with Rich Visotcky](https://workshops.senseandrespond.co/#okrs-rich-visotcky-october-19-2026): October 19th, 2026. Time zone: CDT (Central Time, US & Canada). Live online. From $695. Register at https://ti.to/sense-respond-learning/okrs-rich-visotcky-october-19-2026
