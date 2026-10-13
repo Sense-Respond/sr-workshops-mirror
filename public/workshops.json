@@ -1,49 +1,13 @@
 {
   "account": "sense-respond-learning",
   "source": "api",
-  "updated": "10 Oct 2026, 16:06 UTC",
-  "updated_iso": "2026-10-10T16:06:49+00:00",
+  "updated": "13 Oct 2026, 17:57 UTC",
+  "updated_iso": "2026-10-13T17:57:01+00:00",
   "template_version": 7,
   "ticketing_url": "https://ti.to/sense-respond-learning/",
-  "count": 11,
+  "count": 10,
   "deduped": 0,
   "events": [
-    {
-      "title": "Lean Product Management",
-      "slug": "updated-product-training-for-2027-lpm-1",
-      "url": "https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpm-1",
-      "start": "2026-10-13",
-      "end": "2026-10-27",
-      "date_label": "October 13th–27th, 2026",
-      "location": null,
-      "banner": "https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1164889/4ed7bb77c587274cd1ed77c3c6e68049.png",
-      "price_from": 500.0,
-      "currency": "USD",
-      "start_at": "2026-10-13T00:00:00.000Z",
-      "end_at": "2026-10-27T00:00:00.000Z",
-      "timezone": "UTC",
-      "sold_out": false,
-      "region": "Americas & Europe",
-      "price_label": "$500"
-    },
-    {
-      "title": "Lean Product Management",
-      "slug": "updated-product-training-for-2027-lpm-2",
-      "url": "https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpm-2",
-      "start": "2026-10-13",
-      "end": "2026-10-27",
-      "date_label": "October 13th–27th, 2026",
-      "location": null,
-      "banner": "https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1164897/98d87058dd667df6c06790eea4b54b6b.png",
-      "price_from": 500.0,
-      "currency": "USD",
-      "start_at": "2026-10-13T00:00:00.000Z",
-      "end_at": "2026-10-27T00:00:00.000Z",
-      "timezone": "UTC",
-      "sold_out": false,
-      "region": "Asia-Pacific, Middle East & Africa",
-      "price_label": "$500"
-    },
     {
       "title": "Objectives & Key Results - Who Does What by How Much? - Live Online Workshop with Rich Visotcky",
       "slug": "okrs-rich-visotcky-october-19-2026",
@@ -205,6 +169,24 @@
       "sold_out": false,
       "region": null,
       "price_label": "€800"
+    },
+    {
+      "title": "Building AI Products with Lean Product Management - Live Online Workshop with Matheus Reis",
+      "slug": "lpm-matheus-reis-december-2026",
+      "url": "https://ti.to/sense-respond-learning/lpm-matheus-reis-december-2026",
+      "start": "2026-12-07",
+      "end": "2026-12-14",
+      "date_label": "December 7th–14th, 2026",
+      "location": null,
+      "banner": "https://do3z7e6uuakno.cloudfront.net/uploads/event/banner/1169117/89e4cdd638a626db153308b0ca04f411.png",
+      "price_from": null,
+      "currency": "BRL",
+      "start_at": "2026-12-07T00:00:00.000-03:00",
+      "end_at": "2026-12-14T00:00:00.000-03:00",
+      "timezone": "Brasilia",
+      "sold_out": true,
+      "region": null,
+      "price_label": null
     }
   ]
 }
