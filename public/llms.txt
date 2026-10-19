@@ -2,11 +2,10 @@
 
 > Upcoming workshops from Sense & Respond Learning: live training in Product Management, Lean UX, Product Discovery, OKRs, Outcomes, and Storytelling. Open to individuals. Tickets are sold through Ti.to.
 
-This list was last updated 13 Oct 2026, 17:57 UTC. The full page is at https://workshops.senseandrespond.co/ and the same data is at https://workshops.senseandrespond.co/workshops.json.
+This list was last updated 19 Oct 2026, 17:20 UTC. The full page is at https://workshops.senseandrespond.co/ and the same data is at https://workshops.senseandrespond.co/workshops.json.
 
 ## Upcoming workshops
 
-- [Objectives & Key Results - Who Does What by How Much? - Live Online Workshop with Rich Visotcky](https://workshops.senseandrespond.co/#okrs-rich-visotcky-october-19-2026): October 19th, 2026. Time zone: CDT (Central Time, US & Canada). Live online. From $695. Register at https://ti.to/sense-respond-learning/okrs-rich-visotcky-october-19-2026
 - [Lean Product Discovery para Equipos Ágiles - Taller en Línea en Vivo con Federico Zuppa](https://workshops.senseandrespond.co/#lpd-federico-zuppa-octubre-2026): October 28th–November 18th, 2026. Time zone: UTC-03:00 (Buenos Aires). Live online. From $350. Register at https://ti.to/sense-respond-learning/lpd-federico-zuppa-octubre-2026
 - [Lean Product Discovery](https://workshops.senseandrespond.co/#updated-product-training-for-2027-lpd-1): November 3rd–12th, 2026. Americas & Europe. Live online. From $500. Register at https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpd-1
 - [Lean Product Discovery](https://workshops.senseandrespond.co/#updated-product-training-for-2027-lpd-2): November 3rd–12th, 2026. Asia-Pacific, Middle East & Africa. Live online. From $500. Register at https://ti.to/sense-respond-learning/updated-product-training-for-2027-lpd-2
